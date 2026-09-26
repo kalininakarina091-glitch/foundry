@@ -1,208 +1,152 @@
-"use client";
-
-import { useState } from "react";
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { mockOpportunities } from "@/lib/mock-data";
-
+import { notFound } from "next/navigation";
+import { getOpportunity } from "@/lib/opportunities";
+import EvidenceActions from "@/components/evidence-actions";
+import {
+  DemoNotice,
+  EmptyState,
+  EvidenceCard,
+  ScoreBadge,
+  StatusBadge,
+} from "@/components/product-ui";
+export const dynamic = "force-dynamic";
 export default async function OpportunityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ mode?: string }>;
 }) {
   const { id } = await params;
-  const opportunity = mockOpportunities.find((o) => o.id === id);
-
-  if (!opportunity) {
-    notFound();
-  }
-
-  return <OpportunityDetail opportunity={opportunity} />;
-}
-
-function OpportunityDetail({ opportunity }: { opportunity: (typeof mockOpportunities)[0] }) {
-  const [saved, setSaved] = useState(false);
-
-  function getScoreColor(score: number) {
-    if (score >= 85) return "text-emerald-400";
-    if (score >= 70) return "text-yellow-400";
-    return "text-red-400";
-  }
-
-  function getRecommendationStyle(recommendation: string) {
-    switch (recommendation) {
-      case "BUILD":
-        return "bg-emerald-500 text-black";
-      case "SKIP":
-        return "bg-red-500 text-white";
-      default:
-        return "bg-yellow-500 text-black";
-    }
-  }
-
+  const demo = (await searchParams).mode === "demo";
+  const opportunity = await getOpportunity(id, demo);
+  if (!opportunity) notFound();
   return (
-    <div className="p-8 max-w-5xl">
-      {/* Breadcrumb */}
+    <div className="page-container">
       <Link
-        href="/dashboard"
-        className="text-neutral-400 hover:text-white transition-colors text-sm"
+        href={`/opportunities${demo ? "?mode=demo" : ""}`}
+        className="text-sm text-muted-foreground hover:text-foreground"
       >
-        ← Back to Opportunities
+        ← Все возможности
       </Link>
-
-      {/* Header */}
-      <div className="mt-6 flex items-start justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="inline-block px-3 py-1 bg-neutral-900 border border-neutral-800 rounded-full text-xs text-neutral-400">
-              {opportunity.industry}
+      <div className="mt-7">{demo && <DemoNotice />}</div>
+      <header className="flex flex-wrap justify-between gap-6 border-b border-border pb-7">
+        <div className="min-w-0 flex-1 basis-80">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <span className="eyebrow">
+              {opportunity.industry || "Возможность"}
             </span>
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                opportunity.recommendation === "BUILD"
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : opportunity.recommendation === "SKIP"
-                  ? "bg-red-500/20 text-red-400"
-                  : "bg-yellow-500/20 text-yellow-400"
-              }`}
-            >
-              {opportunity.recommendation}
-            </span>
+            <StatusBadge status={opportunity.status} />
           </div>
-          <h1 className="mt-3 text-4xl font-bold text-white">{opportunity.title}</h1>
-          <p className="mt-2 text-lg text-neutral-400">{opportunity.summary}</p>
+          <h1 className="page-title">{opportunity.title}</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
+            {opportunity.description}
+          </p>
         </div>
-
-        {/* Score Card */}
-        <div className="shrink-0 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-center">
-          <p className="text-sm text-neutral-400 mb-2">Opportunity Score</p>
-          <span className={`text-5xl font-bold ${getScoreColor(opportunity.score)}`}>
-            {opportunity.score}
-          </span>
-          <p className="text-sm text-neutral-500 mt-1">/ 100</p>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="mt-6 flex items-center gap-3">
-        <button
-          onClick={() => setSaved(!saved)}
-          className={`px-6 py-3 rounded-xl font-medium transition-colors ${
-            saved
-              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-              : "bg-neutral-900 text-white border border-neutral-800 hover:border-neutral-700"
-          }`}
-        >
-          {saved ? "✓ Saved" : "Save"}
-        </button>
+        <ScoreBadge score={opportunity.score} />
+      </header>
+      <div className="my-6 flex flex-wrap items-center gap-4">
         <Link
-          href={`/validation/${opportunity.id}`}
-          className="px-6 py-3 bg-emerald-500 text-black font-medium rounded-xl hover:bg-emerald-400 transition-colors"
+          href={`/validation/${encodeURIComponent(id)}${demo ? "?mode=demo" : ""}`}
+          className="button-primary"
         >
-          Validate opportunity →
+          Проверить возможность →
         </Link>
-        <button
-          disabled
-          className="px-6 py-3 bg-neutral-900 text-neutral-600 font-medium rounded-xl cursor-not-allowed"
-          title="Coming soon"
-        >
-          Build this →
-        </button>
+        <p className="text-xs leading-5 text-muted-foreground">
+          Score — предварительная оценка. Confidence появится в результате
+          проверки.
+        </p>
       </div>
-
-      {/* Main Grid */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Why Now */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-3">Why now?</h2>
-            <p className="text-neutral-400 leading-relaxed">{opportunity.whyNow}</p>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="space-y-8">
+          <section className="space-y-6">
+            <TextSection title="Проблема" value={opportunity.problem} />
+            <TextSection title="Целевой клиент" value={opportunity.customer} />
+            <TextSection title="Почему сейчас" value={opportunity.whyNow} />
           </section>
-
-          {/* Problem */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-3">Problem</h2>
-            <p className="text-neutral-400 leading-relaxed">{opportunity.problem}</p>
-          </section>
-
-          {/* Target Customer */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-3">Target Customer</h2>
-            <p className="text-neutral-400">{opportunity.customer}</p>
-          </section>
-
-          {/* Potential MVP */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-3">Potential MVP</h2>
-            <p className="text-neutral-400 leading-relaxed">{opportunity.mvp}</p>
-          </section>
-
-          {/* Risks */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-3">Risks</h2>
-            <ul className="space-y-2">
-              {opportunity.risks.map((risk: string, index: number) => (
-                <li key={index} className="flex items-start gap-2 text-neutral-400">
-                  <span className="text-yellow-400 mt-0.5">⚠</span>
-                  {risk}
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-
-        {/* Right Column - Metrics */}
-        <div className="space-y-6">
-          {/* Market Metrics */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Market Analysis</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-neutral-500 mb-1">Evidence</p>
-                <p className="text-white font-medium">27 signals detected</p>
-              </div>
-              <div>
-                <p className="text-sm text-neutral-500 mb-1">Market</p>
-                <span className="inline-block px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-sm font-medium">
-                  Growing
-                </span>
-              </div>
-              <div>
-                <p className="text-sm text-neutral-500 mb-1">Competition</p>
-                <span className="inline-block px-3 py-1 bg-yellow-500/10 text-yellow-400 rounded-full text-sm font-medium">
-                  Medium
-                </span>
-              </div>
-              <div>
-                <p className="text-sm text-neutral-500 mb-1">Monetization</p>
-                <span className="inline-block px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm font-medium">
-                  Subscription SaaS
-                </span>
-              </div>
+          <section id="evidence">
+            <div className="mb-4 flex items-center gap-3">
+              <h2 className="text-lg font-semibold">
+                Доказательства и сигналы
+              </h2>
+              <span className="badge">{opportunity.evidence.length}</span>
             </div>
-          </section>
-
-          {/* Recommendation */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">AI Recommendation</h2>
-            <span
-              className={`inline-block px-4 py-2 rounded-xl font-bold ${getRecommendationStyle(
-                opportunity.recommendation
-              )}`}
-            >
-              {opportunity.recommendation}
-            </span>
-            <p className="mt-3 text-sm text-neutral-500">
-              {opportunity.recommendation === "BUILD"
-                ? "Strong signals detected. Recommended for further validation."
-                : opportunity.recommendation === "SKIP"
-                ? "High complexity and risks. Not recommended."
-                : "Interesting signals, but requires more research."}
+            <p className="mb-5 text-sm leading-6 text-muted-foreground">
+              Связанные материалы помогают проверить вывод. Сила сигнала не
+              равна уверенности в успехе продукта.
             </p>
+            {opportunity.evidence.length ? (
+              <div className="space-y-3">
+                {opportunity.evidence.map((e) => (
+                  <EvidenceCard key={e.id} evidence={e} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="Недостаточно данных"
+                description={
+                  demo
+                    ? "У этого демонстрационного примера нет реальных источников."
+                    : "К возможности пока не привязаны доказательства. Нельзя сделать обоснованный вывод о спросе."
+                }
+              />
+            )}
+            {!demo && (
+              <EvidenceActions
+                opportunityId={id}
+                count={opportunity.evidence.length}
+              />
+            )}
           </section>
         </div>
+        <aside className="space-y-6 border-t border-border pt-6 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0">
+          <p className="eyebrow">Контекст решения</p>
+          <TextSection title="Рынок" value={opportunity.market} />
+          <TextSection title="Конкуренция" value={opportunity.competition} />
+          <TextSection title="Монетизация" value={opportunity.monetization} />
+          <section>
+            <h2 className="mb-2 text-sm font-semibold">Риски</h2>
+            {opportunity.risks.length ? (
+              <ul className="list-disc space-y-2 pl-4 text-sm leading-6 text-muted-foreground">
+                {opportunity.risks.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm leading-6 text-muted-foreground">
+                Риски ещё не исследованы. Отсутствие данных не означает
+                отсутствие рисков.
+              </p>
+            )}
+          </section>
+          {opportunity.mvp && (
+            <details className="text-sm">
+              <summary className="cursor-pointer font-medium">
+                Гипотеза MVP
+              </summary>
+              <p className="mt-3 leading-6 text-muted-foreground">
+                {opportunity.mvp}
+              </p>
+            </details>
+          )}
+        </aside>
       </div>
     </div>
+  );
+}
+function TextSection({
+  title,
+  value,
+}: {
+  title: string;
+  value: string | null;
+}) {
+  return (
+    <section>
+      <h2 className="mb-2 text-sm font-semibold">{title}</h2>
+      <p className="max-w-prose text-sm leading-7 text-muted-foreground">
+        {value || "Недостаточно данных. Требуется исследование."}
+      </p>
+    </section>
   );
 }
