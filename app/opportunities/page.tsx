@@ -6,16 +6,17 @@ export const dynamic = "force-dynamic";
 export default async function OpportunitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ mode?: string; q?: string; view?: string }>;
 }) {
-  const demo = (await searchParams).mode === "demo";
+  const { mode, q, view } = await searchParams;
+  const demo = mode === "demo";
   const opportunities = await listOpportunities(demo);
   return (
     <div className="page-container">
       <PageHeader
         eyebrow="Возможности / Discover"
-        title="От сигнала к возможности"
-        description="Изучите проблему, проверьте её происхождение и оцените, достаточно ли доказательств для следующего шага."
+        title="Возможности"
+        description="Реальные проблемы рынка. Исследования на основе данных."
       >
         {!demo && (
           <Link href="/opportunities?mode=demo" className="button-secondary">
@@ -25,7 +26,12 @@ export default async function OpportunitiesPage({
       </PageHeader>
       {demo && <DemoNotice />}
       {opportunities.length ? (
-        <OpportunityCatalog opportunities={opportunities} />
+        <OpportunityCatalog
+          key={`${q ?? ""}:${view ?? ""}`}
+          opportunities={opportunities}
+          initialQuery={q}
+          initialView={view}
+        />
       ) : (
         <EmptyState
           title="Возможности ещё не найдены"
