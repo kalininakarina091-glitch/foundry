@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ─── Source ───────────────────────────────────────────
+
+model Source {
+  id            String    @id @default(cuid())
+  name          String
+  type          String    // hackernews | github | rss | reddit | producthunt
+  url           String?
+  status        String    @default("active") // active | disabled | error
+  lastSyncedAt  DateTime?
+  createdAt     DateTime  @default(now())
+
+  rawItems      RawItem[]
+}
+
+// ─── RawItem ──────────────────────────────────────────
+
+model RawItem {
+  id           String    @id @default(cuid())
+  sourceId     String
+  externalId   String?
+  title        String?
+  content      String?
+  url          String?
+  author       String?
+  publishedAt  DateTime?
+  fetchedAt    DateTime  @default(now())
+  metadata     String?   // JSON string
+
+  source       Source    @relation(fields: [sourceId], references: [id])
+  signals      Signal[]
+}
+
+// ─── Signal ───────────────────────────────────────────
+
+model Signal {
+  id                  String    @id @default(cuid())
+  rawItemId           String
+  type                String
+  title               String?
+  description         String?
+  pain                String?
+  customer            String?
+  industry            String?
+  strength            Float     @default(0.5)
+  normalizedProblem   String?   // ← новое
+  normalizedCustomer  String?   // ← новое
+  embedding           String?   // ← новое (JSON string)
+  duplicateOf         String?   // ← новое (signal id)
+  createdAt           DateTime  @default(now())
+
+  rawItem             RawItem   @relation(fields: [rawItemId], references: [id])
+  evidence            Evidence[]
+}
+
+// ─── Evidence ─────────────────────────────────────────
+
+model Evidence {
+  id             String    @id @default(cuid())
+  opportunityId  String
+  signalId       String
+  claim          String?
+  evidenceType   String    // positive | negative | neutral
+  strength       Float     @default(0.5)
+  sourceUrl      String?
+  createdAt      DateTime  @default(now())
+
+  signal         Signal    @relation(fields: [signalId], references: [id])
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id])
+}
+
+// ─── Opportunity ──────────────────────────────────────
+
+model Opportunity {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  industry     String?
+  score        Int       @default(0)
+  status       String    @default("new") // new | saved | validated | skipped
+  createdAt    DateTime  @default(now())
+
+  evidence     Evidence[]
+}

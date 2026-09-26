@@ -1,80 +1,57 @@
-﻿import Link from "next/link";
-
-interface OpportunityCardProps {
-  id: string;
-  title: string;
-  score: number;
-  summary: string;
-  industry?: string;
-  recommendation?: string;
-}
-
-function getScoreColor(score: number) {
-  if (score >= 85) return "text-emerald-400";
-  if (score >= 70) return "text-yellow-400";
-  return "text-red-400";
-}
-
-function getRecommendationBadge(recommendation?: string) {
-  if (!recommendation) return null;
-  
-  const styles = {
-    BUILD: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    SKIP: "bg-red-500/15 text-red-400 border-red-500/20",
-    "RESEARCH MORE": "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-  };
-
-  return (
-    <span
-      className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-        styles[recommendation as keyof typeof styles] || "bg-neutral-800 text-neutral-400 border-neutral-700"
-      }`}
-    >
-      {recommendation}
-    </span>
-  );
-}
-
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { ScoreBadge, StatusBadge } from "@/components/product-ui";
+import { opportunityHref, type OpportunityView } from "@/lib/opportunity-types";
 export default function OpportunityCard({
-  id,
-  title,
-  score,
-  summary,
-  industry,
-  recommendation,
-}: OpportunityCardProps) {
+  opportunity,
+}: {
+  opportunity: OpportunityView;
+}) {
+  const sources = new Set(opportunity.evidence.map((e) => e.sourceId)).size;
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-neutral-600 transition-all hover:shadow-lg hover:shadow-black/20 group">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            {industry && (
-              <span className="text-xs text-neutral-500 bg-neutral-800 px-2.5 py-0.5 rounded-full">
-                {industry}
-              </span>
-            )}
-            {getRecommendationBadge(recommendation)}
+    <article className="foundry-card rounded-2xl p-5 transition-colors hover:border-neutral-600 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="min-w-0 flex-1 basis-64">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {opportunity.industry || "Без категории"}
+            </span>
+            <span className="text-neutral-600">/</span>
+            <StatusBadge status={opportunity.status} />
           </div>
-          <h3 className="text-lg font-semibold text-white group-hover:text-emerald-400 transition-colors">
-            {title}
-          </h3>
-          <p className="mt-2 text-sm text-neutral-400 leading-relaxed">{summary}</p>
+          <h2 className="text-lg font-semibold leading-7">
+            <Link
+              href={opportunityHref(opportunity)}
+              className="hover:text-primary"
+            >
+              {opportunity.title}
+            </Link>
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            {opportunity.description || "Описание ещё не сформировано."}
+          </p>
         </div>
-        <div className="text-right shrink-0">
-          <span className={`text-3xl font-bold ${getScoreColor(score)}`}>{score}</span>
-          <p className="text-xs text-neutral-600 mt-1">/ 100</p>
-        </div>
+        <ScoreBadge score={opportunity.score} />
       </div>
-
-      <div className="mt-5 flex items-center justify-between pt-4 border-t border-neutral-800">
+      <p className="mt-4 text-sm leading-6">
+        <span className="text-muted-foreground">Почему сейчас: </span>
+        {opportunity.whyNow || "актуальность ещё предстоит подтвердить."}
+      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
+        <p className="text-xs text-muted-foreground">
+          {opportunity.evidence.length} доказательств · {sources} источников{" "}
+          <span className="mx-1">/</span>{" "}
+          {opportunity.demo
+            ? "Пример без проверки"
+            : "Confidence: нет сохранённого результата"}
+        </p>
         <Link
-          href={`/opportunities/${id}`}
-          className="px-4 py-2 bg-neutral-800 text-white text-sm rounded-lg hover:bg-neutral-700 transition-colors"
+          href={opportunityHref(opportunity)}
+          className="inline-flex min-h-10 items-center gap-2 text-sm font-medium"
         >
-          Explore →
+          Изучить возможность <ArrowUpRight className="size-4 text-primary" />
         </Link>
-        <span className="text-xs text-neutral-600">Click to see full analysis</span>
       </div>
-    </div>
+    </article>
   );
 }
