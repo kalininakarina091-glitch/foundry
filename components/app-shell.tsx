@@ -3,12 +3,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Plus, Settings2 } from "lucide-react";
 import Sidebar from "@/components/sidebar";
+import { usePreferences } from "@/lib/use-preferences";
 const AUTH_PATHS = ["/login", "/signup"];
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const preferences = usePreferences();
   if (AUTH_PATHS.includes(pathname)) return <>{children}</>;
   return (
-    <div className="min-h-screen bg-background md:flex">
+    <div
+      className="min-h-screen bg-background md:flex"
+      data-density={preferences.compact ? "compact" : "comfortable"}
+      data-descriptions={preferences.showDescriptions ? "visible" : "hidden"}
+    >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-background focus:p-4"
@@ -44,9 +50,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             <span
               className="workspace-avatar"
-              title="Рабочее пространство Foundry"
+              title={preferences.name || "Рабочее пространство Foundry"}
             >
-              F
+              {preferences.name.trim().slice(0, 1).toUpperCase() || "F"}
             </span>
           </div>
         </header>

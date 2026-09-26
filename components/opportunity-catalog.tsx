@@ -2,6 +2,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { Bookmark, Grid2X2, List, Search, Download } from "lucide-react";
 import OpportunityCard from "@/components/opportunity-card";
+import { usePreferences } from "@/lib/use-preferences";
 import { EmptyState } from "@/components/product-ui";
 import type { OpportunityView } from "@/lib/opportunity-types";
 const storageKey = "foundry:bookmarks:v1";
@@ -42,13 +43,17 @@ export default function OpportunityCatalog({
   initialQuery?: string;
   initialView?: string;
 }) {
+  const preferences = usePreferences();
   const [query, setQuery] = useState(initialQuery);
   const [tab, setTab] = useState(initialView === "saved" ? "saved" : "all");
   const [category, setCategory] = useState("");
   const [score, setScore] = useState("");
   const [status, setStatus] = useState("");
-  const [sort, setSort] = useState("score");
-  const [layout, setLayout] = useState("grid");
+  const [sortOverride, setSort] = useState<string | null>(null);
+  const sort = sortOverride ?? preferences.catalogSort;
+  const [layoutOverride, setLayout] = useState<string | null>(null);
+  const layout = layoutOverride ?? preferences.catalogLayout;
+  const [pagination, setPagination] = useState({ key: "", page: 1 });
   const [error, setError] = useState("");
   const saved = parseSaved(
     useSyncExternalStore(subscribe, snapshot, () => "[]"),
@@ -108,6 +113,27 @@ export default function OpportunityCatalog({
           ? b.evidence.length - a.evidence.length
           : (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
     );
+  const paginationKey = JSON.stringify([
+    query,
+    tab,
+    category,
+    score,
+    status,
+    sort,
+    preferences.pageSize,
+  ]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / preferences.pageSize),
+  );
+  const page =
+    pagination.key === paginationKey
+      ? Math.min(pagination.page, totalPages)
+      : 1;
+  const pageItems = filtered.slice(
+    (page - 1) * preferences.pageSize,
+    page * preferences.pageSize,
+  );
   function exportReport() {
     const report = {
       exportedAt: new Date().toISOString(),
@@ -247,7 +273,7 @@ export default function OpportunityCatalog({
         <div
           className={`opportunity-grid ${layout === "list" ? "list-layout" : ""}`}
         >
-          {filtered.map((o) => (
+          {pageItems.map((o) => (
             <OpportunityCard
               key={o.id}
               opportunity={o}
@@ -278,6 +304,33 @@ export default function OpportunityCatalog({
             Показать все
           </button>
         </EmptyState>
+      )}
+      {filtered.length > 0 && (
+        <nav className="catalog-pagination" aria-label="Страницы возможностей">
+          <span>
+            Страница {page} из {totalPages} · {filtered.length} результатов
+          </span>
+          <div>
+            <button
+              className="button-secondary"
+              disabled={page <= 1}
+              onClick={() =>
+                setPagination({ key: paginationKey, page: page - 1 })
+              }
+            >
+              ← Назад
+            </button>
+            <button
+              className="button-secondary"
+              disabled={page >= totalPages}
+              onClick={() =>
+                setPagination({ key: paginationKey, page: page + 1 })
+              }
+            >
+              Далее →
+            </button>
+          </div>
+        </nav>
       )}
     </>
   );
