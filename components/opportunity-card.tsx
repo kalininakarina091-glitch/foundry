@@ -1,56 +1,85 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { ScoreBadge, StatusBadge } from "@/components/product-ui";
+import {
+  ArrowRight,
+  Bookmark,
+  ChartNoAxesColumnIncreasing,
+  Database,
+  CircleHelp,
+} from "lucide-react";
+import { StatusBadge } from "@/components/product-ui";
+import { ScoreRing } from "@/components/opportunity-workspace";
 import { opportunityHref, type OpportunityView } from "@/lib/opportunity-types";
 export default function OpportunityCard({
   opportunity,
+  saved,
+  onToggleSave,
 }: {
   opportunity: OpportunityView;
+  saved: boolean;
+  onToggleSave: () => void;
 }) {
   const sources = new Set(opportunity.evidence.map((e) => e.sourceId)).size;
+  const palette =
+    [...(opportunity.industry || opportunity.id)].reduce(
+      (sum, c) => sum + c.charCodeAt(0),
+      0,
+    ) % 6;
   return (
-    <article className="foundry-card rounded-2xl p-5 transition-colors hover:border-neutral-600 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-5">
-        <div className="min-w-0 flex-1 basis-64">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {opportunity.industry || "Без категории"}
-            </span>
-            <span className="text-neutral-600">/</span>
-            <StatusBadge status={opportunity.status} />
-          </div>
-          <h2 className="text-lg font-semibold leading-7">
-            <Link
-              href={opportunityHref(opportunity)}
-              className="hover:text-primary"
-            >
-              {opportunity.title}
-            </Link>
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            {opportunity.description || "Описание ещё не сформировано."}
-          </p>
+    <article className={`discovery-card art-${palette}`}>
+      <div className="card-cover">
+        <div className="cover-sculpture" aria-hidden="true">
+          <i />
+          <i />
+          <i />
         </div>
-        <ScoreBadge score={opportunity.score} />
-      </div>
-      <p className="mt-4 text-sm leading-6">
-        <span className="text-muted-foreground">Почему сейчас: </span>
-        {opportunity.whyNow || "актуальность ещё предстоит подтвердить."}
-      </p>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
-        <p className="text-xs text-muted-foreground">
-          {opportunity.evidence.length} доказательств · {sources} источников{" "}
-          <span className="mx-1">/</span>{" "}
-          {opportunity.demo
-            ? "Пример без проверки"
-            : "Confidence: нет сохранённого результата"}
-        </p>
-        <Link
-          href={opportunityHref(opportunity)}
-          className="inline-flex min-h-10 items-center gap-2 text-sm font-medium"
+        <span className="category-chip">
+          {opportunity.industry || "Без категории"}
+        </span>
+        <button
+          className="bookmark-button"
+          aria-label={`${saved ? "Убрать из избранного" : "В избранное"}: ${opportunity.title}`}
+          aria-pressed={saved}
+          onClick={onToggleSave}
         >
-          Изучить возможность <ArrowUpRight className="size-4 text-primary" />
-        </Link>
+          <Bookmark size={20} fill={saved ? "currentColor" : "none"} />
+        </button>
+      </div>
+      <div className="discovery-card-body">
+        <h2>
+          <Link href={opportunityHref(opportunity)}>{opportunity.title}</Link>
+        </h2>
+        <p className="discovery-description">
+          {opportunity.problem ||
+            opportunity.description ||
+            "Описание ещё не сформировано."}
+        </p>
+        <div className="card-metrics">
+          <ScoreRing score={opportunity.score} />
+          <div className="card-metric-details">
+            <StatusBadge status={opportunity.status} />
+            <div className="card-evidence">
+              <ChartNoAxesColumnIncreasing size={23} />
+              <span>
+                <strong>{opportunity.evidence.length}</strong>
+                <small>доказательств</small>
+              </span>
+              <CircleHelp size={20} />
+              <span>
+                <strong>—</strong>
+                <small>уверенность</small>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="discovery-card-footer">
+          <span>
+            <Database size={14} />
+            {sources} источников
+          </span>
+          <Link href={opportunityHref(opportunity)} className="button-primary">
+            Исследовать <ArrowRight size={14} />
+          </Link>
+        </div>
       </div>
     </article>
   );
