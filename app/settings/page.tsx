@@ -1,47 +1,33 @@
-import Link from "next/link";
-import { PageHeader } from "@/components/product-ui";
+import { prisma } from "@/lib/db";
+import SettingsWorkspace from "@/components/settings-workspace";
 export const dynamic = "force-dynamic";
-export default function SettingsPage() {
-  const configured = Boolean(process.env.OPENROUTER_API_KEY);
+export default async function SettingsPage() {
+  const sources = await prisma.source.findMany({
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      status: true,
+      _count: { select: { rawItems: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
   return (
-    <div className="page-container">
-      <PageHeader
-        eyebrow="Система"
-        title="Настройки проекта"
-        description="Состояние подключения и инструменты исследования."
+    <div className="page-container settings-page">
+      <header className="settings-heading">
+        <h1 className="page-title">Настройки</h1>
+        <p>Ваш профиль, предпочтения и источники данных.</p>
+      </header>
+      <SettingsWorkspace
+        sources={sources.map((s) => ({
+          id: s.id,
+          name: s.name,
+          type: s.type,
+          status: s.status,
+          count: s._count.rawItems,
+        }))}
+        aiConfigured={Boolean(process.env.OPENROUTER_API_KEY)}
       />
-      <section className="foundry-card max-w-3xl rounded-2xl p-6">
-        <h2 className="font-semibold">AI-проверка</h2>
-        <p className="mt-3 text-sm text-muted-foreground">
-          {configured
-            ? "OpenRouter настроен. Доступность провайдера проверяется при запросе."
-            : "Ключ OpenRouter не настроен. Для AI-проверки добавьте OPENROUTER_API_KEY в окружение сервера."}
-        </p>
-        <p className="mt-3 text-xs leading-6 text-muted-foreground">
-          Результаты проверки отображаются в текущей сессии страницы. История
-          проверок пока не сохраняется.
-        </p>
-      </section>
-      <section className="mt-8 max-w-3xl">
-        <h2 className="font-semibold">Данные и исследование</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Существующие инструменты для подготовки данных. Сигнал сам по себе ещё
-          не является возможностью.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          {[
-            ["Источники", "/sources"],
-            ["Сигналы", "/signals"],
-            ["Кластеры", "/clusters"],
-            ["Паттерны", "/patterns"],
-            ["Доказательства", "/evidence"],
-          ].map(([name, href]) => (
-            <Link key={href} className="button-secondary" href={href}>
-              {name} →
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
