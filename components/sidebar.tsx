@@ -1,51 +1,57 @@
-﻿"use client";
-
+"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: "🏠" },
-  { href: "/opportunities", label: "Opportunities", icon: "🔎" },
-  { href: "/settings", label: "Settings", icon: "⚙️" },
+import { Compass, LayoutDashboard, Settings2, Hexagon } from "lucide-react";
+const items = [
+  { href: "/dashboard", label: "Обзор", icon: LayoutDashboard },
+  { href: "/opportunities", label: "Возможности", icon: Compass },
+  { href: "/settings", label: "Настройки", icon: Settings2 },
 ];
-
 export default function Sidebar() {
   const pathname = usePathname();
-
   return (
-    <aside className="w-64 h-screen bg-neutral-950 border-r border-neutral-800 flex flex-col">
-      <div className="p-6">
-        <Link href="/dashboard" className="text-xl font-bold text-white">
-          Opportunity<span className="text-emerald-400">Scanner</span>
-        </Link>
-      </div>
-
-      <nav className="flex-1 px-4 space-y-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname === item.href
-                ? "bg-neutral-800 text-white"
-                : "text-neutral-400 hover:text-white hover:bg-neutral-900"
-            }`}
-          >
-            <span>{item.icon}</span>
-            {item.label}
-          </Link>
-        ))}
+    <aside className="border-b border-border bg-sidebar md:sticky md:top-0 md:flex md:h-screen md:w-56 md:shrink-0 md:flex-col md:border-r md:border-b-0">
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-3 px-5 py-6 text-xl font-semibold tracking-tight"
+      >
+        <Hexagon className="size-7 text-primary" strokeWidth={1.5} />
+        Foundry<span className="text-primary">.</span>
+      </Link>
+      <p className="eyebrow hidden px-5 pb-4 pt-5 md:block">
+        Рабочее пространство
+      </p>
+      <nav
+        aria-label="Основная навигация"
+        className="flex gap-1 px-3 pb-3 md:flex-col"
+      >
+        {items.map(({ href, label, icon: Icon }) => {
+          const active =
+            pathname === href ||
+            (href === "/opportunities" &&
+              /^\/(opportunities|validation|insights)(\/|$)/.test(pathname));
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm md:justify-start ${active ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            >
+              <Icon
+                className="hidden size-4 shrink-0 min-[380px]:block"
+                aria-hidden
+              />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
-
-      <div className="p-4 border-t border-neutral-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-medium">
-            A
-          </div>
-          <div>
-            <p className="text-sm text-white">Alex</p>
-            <p className="text-xs text-neutral-500">alex@email.com</p>
-          </div>
+      <div className="mt-auto hidden p-5 md:block">
+        <div className="border-t border-border pt-5">
+          <p className="text-xs font-medium">Сначала доказательства.</p>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            Найдите проблему, изучите сигналы и примите решение.
+          </p>
         </div>
       </div>
     </aside>

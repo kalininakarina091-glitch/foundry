@@ -1,49 +1,47 @@
+import Link from "next/link";
+import { PageHeader } from "@/components/product-ui";
+export const dynamic = "force-dynamic";
 export default function SettingsPage() {
+  const configured = Boolean(process.env.OPENROUTER_API_KEY);
   return (
-    <div className="p-8 max-w-2xl">
-      <h1 className="text-3xl font-bold text-white">Settings</h1>
-      <p className="mt-2 text-neutral-400">Manage your account and preferences</p>
-
-      <div className="mt-8 space-y-6">
-        <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Profile</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-neutral-400 mb-1">Name</label>
-              <input
-                type="text"
-                defaultValue="Alex"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-neutral-400 mb-1">Email</label>
-              <input
-                type="email"
-                defaultValue="alex@email.com"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-            <button className="bg-emerald-500 text-black font-medium px-6 py-2 rounded-lg hover:bg-emerald-400 transition-colors">
-              Save
-            </button>
-          </div>
-        </section>
-
-        <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Preferences</h2>
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 text-neutral-300">
-              <input type="checkbox" defaultChecked className="rounded bg-neutral-800" />
-              Daily opportunity digest
-            </label>
-            <label className="flex items-center gap-3 text-neutral-300">
-              <input type="checkbox" defaultChecked className="rounded bg-neutral-800" />
-              Email notifications
-            </label>
-          </div>
-        </section>
-      </div>
+    <div className="page-container">
+      <PageHeader
+        eyebrow="Система"
+        title="Настройки проекта"
+        description="Состояние подключения и инструменты исследования."
+      />
+      <section className="foundry-card max-w-3xl rounded-2xl p-6">
+        <h2 className="font-semibold">AI-проверка</h2>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {configured
+            ? "OpenRouter настроен. Доступность провайдера проверяется при запросе."
+            : "Ключ OpenRouter не настроен. Для AI-проверки добавьте OPENROUTER_API_KEY в окружение сервера."}
+        </p>
+        <p className="mt-3 text-xs leading-6 text-muted-foreground">
+          Результаты проверки отображаются в текущей сессии страницы. История
+          проверок пока не сохраняется.
+        </p>
+      </section>
+      <section className="mt-8 max-w-3xl">
+        <h2 className="font-semibold">Данные и исследование</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Существующие инструменты для подготовки данных. Сигнал сам по себе ещё
+          не является возможностью.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          {[
+            ["Источники", "/sources"],
+            ["Сигналы", "/signals"],
+            ["Кластеры", "/clusters"],
+            ["Паттерны", "/patterns"],
+            ["Доказательства", "/evidence"],
+          ].map(([name, href]) => (
+            <Link key={href} className="button-secondary" href={href}>
+              {name} →
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
