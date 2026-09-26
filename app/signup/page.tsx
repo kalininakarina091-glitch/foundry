@@ -2,50 +2,59 @@ import Link from "next/link";
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+    <div className="flex min-h-screen items-center justify-center bg-[#0B0B0B] px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-white">
-            Opportunity<span className="text-emerald-400">Scanner</span>
+            Foundry<span className="text-[#FF6B00]">.</span>
           </h1>
-          <p className="mt-2 text-neutral-400">Find what's worth building. Then build it.</p>
+          <p className="mt-2 text-neutral-400">
+            От рыночной возможности до работающего бизнеса.
+          </p>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
+        <div className="foundry-card rounded-2xl p-8">
           <form className="space-y-4">
             <div>
-              <label className="block text-sm text-neutral-400 mb-1">Name</label>
+              <label className="mb-1 block text-sm text-neutral-400">Имя</label>
               <input
                 type="text"
-                placeholder="Alex"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500"
+                placeholder="Ракиб"
+                className="w-full rounded-xl border border-[#2a2a2a] bg-[#121212] px-4 py-3 text-white placeholder-neutral-500 focus:border-[#FF6B00] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm text-neutral-400 mb-1">Email</label>
+              <label className="mb-1 block text-sm text-neutral-400">
+                Email
+              </label>
               <input
                 type="email"
                 placeholder="you@email.com"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-[#2a2a2a] bg-[#121212] px-4 py-3 text-white placeholder-neutral-500 focus:border-[#FF6B00] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm text-neutral-400 mb-1">Password</label>
+              <label className="mb-1 block text-sm text-neutral-400">
+                Пароль
+              </label>
               <input
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-[#2a2a2a] bg-[#121212] px-4 py-3 text-white placeholder-neutral-500 focus:border-[#FF6B00] focus:outline-none"
               />
             </div>
-            <button className="w-full bg-emerald-500 text-black font-medium py-3 rounded-lg hover:bg-emerald-400 transition-colors">
-              Create Account
-            </button>
+            <Link
+              href="/dashboard"
+              className="block rounded-xl bg-[#FF6B00] py-3 text-center font-medium text-black hover:bg-[#ff7d1f]"
+            >
+              Открыть прототип
+            </Link>
           </form>
 
           <p className="mt-4 text-center text-sm text-neutral-400">
-            Already have an account?{" "}
-            <Link href="/login" className="text-emerald-400 hover:underline">
-              Sign in
+            Уже есть аккаунт?{" "}
+            <Link href="/login" className="text-[#FF6B00] hover:underline">
+              Войти
             </Link>
           </p>
         </div>
