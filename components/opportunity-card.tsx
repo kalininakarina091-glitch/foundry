@@ -1,80 +1,86 @@
-﻿import Link from "next/link";
-
-interface OpportunityCardProps {
-  id: string;
-  title: string;
-  score: number;
-  summary: string;
-  industry?: string;
-  recommendation?: string;
-}
-
-function getScoreColor(score: number) {
-  if (score >= 85) return "text-emerald-400";
-  if (score >= 70) return "text-yellow-400";
-  return "text-red-400";
-}
-
-function getRecommendationBadge(recommendation?: string) {
-  if (!recommendation) return null;
-  
-  const styles = {
-    BUILD: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    SKIP: "bg-red-500/15 text-red-400 border-red-500/20",
-    "RESEARCH MORE": "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-  };
-
-  return (
-    <span
-      className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-        styles[recommendation as keyof typeof styles] || "bg-neutral-800 text-neutral-400 border-neutral-700"
-      }`}
-    >
-      {recommendation}
-    </span>
-  );
-}
-
+import Link from "next/link";
+import {
+  ArrowRight,
+  Bookmark,
+  ChartNoAxesColumnIncreasing,
+  Database,
+  CircleHelp,
+} from "lucide-react";
+import { StatusBadge } from "@/components/product-ui";
+import { ScoreRing } from "@/components/opportunity-workspace";
+import { opportunityHref, type OpportunityView } from "@/lib/opportunity-types";
 export default function OpportunityCard({
-  id,
-  title,
-  score,
-  summary,
-  industry,
-  recommendation,
-}: OpportunityCardProps) {
+  opportunity,
+  saved,
+  onToggleSave,
+}: {
+  opportunity: OpportunityView;
+  saved: boolean;
+  onToggleSave: () => void;
+}) {
+  const sources = new Set(opportunity.evidence.map((e) => e.sourceId)).size;
+  const palette =
+    [...(opportunity.industry || opportunity.id)].reduce(
+      (sum, c) => sum + c.charCodeAt(0),
+      0,
+    ) % 6;
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-neutral-600 transition-all hover:shadow-lg hover:shadow-black/20 group">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            {industry && (
-              <span className="text-xs text-neutral-500 bg-neutral-800 px-2.5 py-0.5 rounded-full">
-                {industry}
-              </span>
-            )}
-            {getRecommendationBadge(recommendation)}
-          </div>
-          <h3 className="text-lg font-semibold text-white group-hover:text-emerald-400 transition-colors">
-            {title}
-          </h3>
-          <p className="mt-2 text-sm text-neutral-400 leading-relaxed">{summary}</p>
+    <article className={`discovery-card art-${palette}`}>
+      <div className="card-cover">
+        <div className="cover-sculpture" aria-hidden="true">
+          <i />
+          <i />
+          <i />
         </div>
-        <div className="text-right shrink-0">
-          <span className={`text-3xl font-bold ${getScoreColor(score)}`}>{score}</span>
-          <p className="text-xs text-neutral-600 mt-1">/ 100</p>
-        </div>
-      </div>
-
-      <div className="mt-5 flex items-center justify-between pt-4 border-t border-neutral-800">
-        <Link
-          href={`/opportunities/${id}`}
-          className="px-4 py-2 bg-neutral-800 text-white text-sm rounded-lg hover:bg-neutral-700 transition-colors"
+        <span className="category-chip">
+          {opportunity.industry || "Без категории"}
+        </span>
+        <button
+          className="bookmark-button"
+          aria-label={`${saved ? "Убрать из избранного" : "В избранное"}: ${opportunity.title}`}
+          aria-pressed={saved}
+          onClick={onToggleSave}
         >
-          Explore →
-        </Link>
-        <span className="text-xs text-neutral-600">Click to see full analysis</span>
+          <Bookmark size={20} fill={saved ? "currentColor" : "none"} />
+        </button>
       </div>
-    </div>
+      <div className="discovery-card-body">
+        <h2>
+          <Link href={opportunityHref(opportunity)}>{opportunity.title}</Link>
+        </h2>
+        <p className="discovery-description">
+          {opportunity.problem ||
+            opportunity.description ||
+            "Описание ещё не сформировано."}
+        </p>
+        <div className="card-metrics">
+          <ScoreRing score={opportunity.score} />
+          <div className="card-metric-details">
+            <StatusBadge status={opportunity.status} />
+            <div className="card-evidence">
+              <ChartNoAxesColumnIncreasing size={23} />
+              <span>
+                <strong>{opportunity.evidence.length}</strong>
+                <small>доказательств</small>
+              </span>
+              <CircleHelp size={20} />
+              <span>
+                <strong>—</strong>
+                <small>уверенность</small>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="discovery-card-footer">
+          <span>
+            <Database size={14} />
+            {sources} источников
+          </span>
+          <Link href={opportunityHref(opportunity)} className="button-primary">
+            Исследовать <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }
