@@ -1,104 +1,69 @@
-"use client";
-
-import { useState } from "react";
-
-export default function SignalsPage() {
-  const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState<{
-    processed: number;
-    relevant: number;
-    skipped: number;
-    errors: number;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleExtract() {
-    setProcessing(true);
-    setResult(null);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/signals/extract-batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit: 3 }),
-      });
-      const data = await res.json();
-
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setResult(data);
-      }
-    } catch {
-      setError("Ошибка извлечения сигналов");
-    } finally {
-      setProcessing(false);
-    }
-  }
-
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { traceableUrl } from "@/lib/traceability";
+import PipelineActions from "@/components/pipeline-actions";
+export const dynamic = "force-dynamic";
+export default async function SignalsPage() {
+  const raws = await prisma.rawItem.findMany({
+    include: { source: true, signals: true },
+    orderBy: { fetchedAt: "desc" },
+    take: 100,
+  });
   return (
-    <div className="px-8 py-7 max-w-4xl">
-      <h1 className="text-3xl font-semibold text-white">Извлечение сигналов</h1>
-      <p className="mt-2 text-neutral-400">
-        AI анализирует сырые данные и превращает их в структурированные
-        бизнес-сигналы.
+    <div className="page-container">
+      <h1 className="page-title">Материалы и сигналы</h1>
+      <p className="my-4 text-muted-foreground">
+        Последние 100 материалов. Извлечение использует исходный текст;
+        нормализация не объединяет независимые публикации в дубликаты.
       </p>
-
-      <div className="mt-8 bg-neutral-900 border border-neutral-800 rounded-2xl p-8">
-        <h2 className="text-white font-semibold mb-4">Обработать RawItems</h2>
-        <p className="text-neutral-400 text-sm mb-6">
-          Система проанализирует до трёх необработанных материалов и выделит
-          бизнес-сигналы.
-        </p>
-
-        <button
-          onClick={handleExtract}
-          disabled={processing}
-          className="px-5 py-3 bg-emerald-500 text-black font-medium rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50"
-        >
-          {processing ? "Обработка..." : "Обработать 3"}
-        </button>
-      </div>
-
-      <button
-        onClick={async () => {
-          const res = await fetch("/api/signals/normalize", { method: "POST" });
-          const data = await res.json();
-          alert(
-            `Нормализовано: ${data.normalized}, дубликатов: ${data.duplicates}`,
-          );
-        }}
-        className="mt-4 rounded-xl bg-neutral-800 px-5 py-3 font-medium text-white hover:bg-neutral-700"
-      >
-        Нормализовать сигналы
-      </button>
-
-      {result && (
-        <div className="mt-6 bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-          <h3 className="text-white font-semibold mb-4">Результат</h3>
-          <div className="space-y-2 text-sm">
-            <p className="text-neutral-300">
-              Обработано: <span className="text-white">{result.processed}</span>
+      <PipelineActions />
+      <Link href="/clusters" className="button-secondary">
+        Кластеры →
+      </Link>
+      <div className="mt-6 space-y-4">
+        {raws.map((r) => (
+          <article key={r.id} className="foundry-card rounded-xl p-5">
+            <h2>{r.title}</h2>
+            <p className="my-2 text-xs text-muted-foreground">
+              {r.source.name} · {r.extractionStatus} · {r.signals.length}{" "}
+              сигналов
             </p>
-            <p className="text-emerald-400">
-              Релевантных сигналов: {result.relevant}
-            </p>
-            <p className="text-neutral-400">
-              Пропущено (не релевантно): {result.skipped}
-            </p>
-            {result.errors > 0 && (
-              <p className="text-red-400">Ошибок: {result.errors}</p>
+            {traceableUrl(r.url) ? (
+              <a
+                href={traceableUrl(r.url)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary"
+              >
+                Первоисточник ↗
+              </a>
+            ) : (
+              <p className="text-amber-300 text-sm">
+                Нет пригодной публичной ссылки: материал исключён из pipeline.
+              </p>
             )}
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-6 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400">
-          {error}
-        </div>
-      )}
+            <details className="mt-3 text-xs">
+              <summary>Происхождение и исходный текст</summary>
+              <p className="my-2 break-all">
+                Source {r.sourceId} → RawItem {r.id}
+              </p>
+              <p className="whitespace-pre-wrap">
+                {r.content ||
+                  "Исходный текст отсутствует; доступен только заголовок."}
+              </p>
+              {r.signals.map((s) => (
+                <div className="mt-4 border-t pt-3" key={s.id}>
+                  <p>Signal {s.id}</p>
+                  <p>{s.title}</p>
+                  <p>Цитата: {s.description}</p>
+                  <p>Нормализация: {s.normalizedProblem || "Нет"}</p>
+                  <p>Дубликат: {s.duplicateOf || "Нет"}</p>
+                </div>
+              ))}
+            </details>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

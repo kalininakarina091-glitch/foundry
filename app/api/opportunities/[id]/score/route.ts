@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 import { scoreOpportunity } from "@/lib/scoring";
-
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-
-  try {
-    const score = await scoreOpportunity(id);
-    return NextResponse.json(score);
-  } catch {
-    return NextResponse.json({ error: "Ошибка скоринга" }, { status: 500 });
-  }
+  if (!(await prisma.opportunity.findUnique({ where: { id } })))
+    return NextResponse.json(
+      { error: "Возможность не найдена" },
+      { status: 404 },
+    );
+  return NextResponse.json(await scoreOpportunity(id));
 }

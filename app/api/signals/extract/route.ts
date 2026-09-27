@@ -1,67 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { extractSignals } from "@/lib/ai";
-
+import { z } from "zod";
+import { extractRawItem } from "@/lib/extraction";
 export async function POST(request: Request) {
-  const body = await request.json();
-
-  const rawItem = await prisma.rawItem.findUnique({
-    where: { id: body.rawItemId },
-    include: { source: true },
-  });
-
-  if (!rawItem) {
-    return NextResponse.json({ error: "RawItem не найден" }, { status: 404 });
-  }
-
-  // Проверяем, есть ли уже сигнал для этого rawItem
-  const existingSignal = await prisma.signal.findFirst({
-    where: { rawItemId: rawItem.id },
-  });
-
-  if (existingSignal) {
-    return NextResponse.json({
-      skipped: true,
-      message: "Сигнал уже существует",
-    });
-  }
-
-  try {
-    const extraction = await extractSignals({
-      title: rawItem.title,
-      content: rawItem.content,
-      sourceType: rawItem.source.type,
-    });
-
-    if (!extraction.is_relevant) {
-      return NextResponse.json({
-        is_relevant: false,
-        message: "Не является бизнес-сигналом",
-      });
-    }
-
-    const signal = await prisma.signal.create({
-      data: {
-        rawItemId: rawItem.id,
-        type: extraction.signal_type || "trend",
-        title: extraction.problem || rawItem.title,
-        description: extraction.pain_point || rawItem.content,
-        pain: extraction.pain_point,
-        customer: extraction.customer,
-        industry: extraction.industry,
-        strength: extraction.strength,
-      },
-    });
-
-    return NextResponse.json({
-      is_relevant: true,
-      signal,
-    });
-  } catch (error) {
-    console.error("Extraction error:", error);
+  const body = z
+    .object({ rawItemId: z.string().min(1).max(200) })
+    .safeParse(await request.json().catch(() => null));
+  if (!body.success)
+    return NextResponse.json({ error: "Укажите rawItemId" }, { status: 400 });
+  if (!process.env.OPENROUTER_API_KEY)
     return NextResponse.json(
-      { error: "Ошибка извлечения сигнала" },
-      { status: 500 },
+      { error: "AI-провайдер не настроен" },
+      { status: 503 },
     );
-  }
+  const { status, ...result } = await extractRawItem(body.data.rawItemId);
+  return NextResponse.json(result, { status });
 }

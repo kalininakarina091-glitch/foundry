@@ -12,7 +12,10 @@ const evidence: ValidationEvidence[] = [0, 1, 2].map((i) => ({
   claim: "Наблюдение из материала",
   sourceId: `s${i % 2}`,
   rawItemId: `r${i}`,
-  url: `https://example.org/${i}`,
+  url:
+    i % 2
+      ? `https://github.com/test/repo/issues/${i}`
+      : `https://news.ycombinator.com/item?id=${i}`,
   type: "neutral",
   signalType: "pain",
 }));
@@ -22,7 +25,7 @@ const validReport = {
   confidence: 80,
   recommendation: "BUILD",
   positive_evidence: [
-    { claim: "Повторяющаяся проблема", evidence_ids: ["e0", "e1"] },
+    { claim: "Повторяющаяся проблема", evidence_ids: ["e0", "e1", "e2"] },
   ],
 };
 
@@ -41,7 +44,15 @@ test("missing, single-source or duplicate materials cannot justify BUILD", () =>
     false,
   );
   assert.equal(
-    checkValidationReport(validReport, evidence.slice(0, 2)).recommendation,
+    checkValidationReport(
+      {
+        ...validReport,
+        positive_evidence: [
+          { claim: "Two materials", evidence_ids: ["e0", "e1"] },
+        ],
+      },
+      evidence.slice(0, 2),
+    ).recommendation,
     "RESEARCH MORE",
   );
 });
@@ -93,5 +104,35 @@ test("demo links preserve mode and source links permit only HTTP(S)", () => {
   assert.equal(
     safeSourceUrl("https://example.org/item"),
     "https://example.org/item",
+  );
+});
+
+test("placeholder, same-host and uncited corroboration cannot justify BUILD", () => {
+  assert.equal(
+    hasEnoughEvidence(
+      evidence.map((e) => ({ ...e, url: `https://example.com/${e.id}` })),
+    ),
+    false,
+  );
+  assert.equal(
+    hasEnoughEvidence(
+      evidence.map((e) => ({
+        ...e,
+        url: `https://github.com/acme/tool/issues/${e.id}`,
+      })),
+    ),
+    false,
+  );
+  assert.equal(
+    checkValidationReport(
+      {
+        ...validReport,
+        positive_evidence: [
+          { claim: "Only one cited observation", evidence_ids: ["e0"] },
+        ],
+      },
+      evidence,
+    ).recommendation,
+    "RESEARCH MORE",
   );
 });

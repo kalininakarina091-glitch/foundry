@@ -1,3 +1,4 @@
+import { traceableUrl } from "./source-url.ts";
 import { z } from "zod";
 
 const claimSchema = z.object({
@@ -34,17 +35,17 @@ export function evidenceStats(evidence: ValidationEvidence[]) {
   };
 }
 export function hasEnoughEvidence(evidence: ValidationEvidence[]) {
+  const urls = new Set<string>();
   const traceable = evidence.filter((e) => {
-    if (!e.claim?.trim() || !e.url) return false;
-    try {
-      return ["https:", "http:"].includes(new URL(e.url).protocol);
-    } catch {
-      return false;
-    }
+    const url = traceableUrl(e.url);
+    if (!e.claim?.trim() || !url || urls.has(url)) return false;
+    urls.add(url);
+    return true;
   });
   return (
     new Set(traceable.map((e) => e.rawItemId)).size >= 3 &&
-    new Set(traceable.map((e) => e.sourceId)).size >= 2
+    new Set(traceable.map((e) => e.sourceId)).size >= 2 &&
+    new Set(traceable.map((e) => new URL(e.url!).hostname)).size >= 2
   );
 }
 export function insufficientReport(): ValidationReport {
@@ -83,7 +84,12 @@ export function checkValidationReport(
     report.recommendation === "BUILD" &&
     (report.confidence < 70 ||
       report.verdict !== "promising" ||
-      report.positive_evidence.length === 0)
+      report.positive_evidence.length === 0 ||
+      !hasEnoughEvidence(
+        evidence.filter((e) =>
+          report.positive_evidence.some((c) => c.evidence_ids.includes(e.id)),
+        ),
+      ))
   ) {
     return {
       ...report,

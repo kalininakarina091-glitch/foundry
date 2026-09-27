@@ -57,8 +57,8 @@ export default function EvidenceActions({
     <details className="mt-5 rounded-xl border border-border p-4 text-sm">
       <summary className="font-medium">Управление материалами</summary>
       <p className="mt-3 max-w-prose text-sm leading-6 text-muted-foreground">
-        Найдите связанные сигналы в базе проекта. Автоматическую оценку
-        релевантности нужно проверить по первоисточникам.
+        Восстановите связи с сигналами сохранённого паттерна. Их релевантность
+        нужно проверить по первоисточникам.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <button
@@ -66,7 +66,7 @@ export default function EvidenceActions({
           disabled={pending}
           onClick={() => update("link-signals")}
         >
-          {pending ? "Обновляем материалы…" : "Найти связанные сигналы"}
+          {pending ? "Обновляем материалы…" : "Восстановить исходные связи"}
         </button>
         {count > 0 && (
           <button

@@ -1,37 +1,31 @@
-export async function fetchHackerNews(): Promise<
-  Array<{
-    externalId: string;
-    title: string;
-    content: string | null;
-    url: string | null;
-    author: string | null;
-    publishedAt: Date;
-  }>
-> {
-  const response = await fetch(
-    "https://hacker-news.firebaseio.com/v0/topstories.json",
+import { fetchPublic, readBounded, type SourceItem } from "./http";
+export async function fetchHackerNews(): Promise<SourceItem[]> {
+  const ids = JSON.parse(
+    await readBounded(
+      await fetchPublic(
+        "https://hacker-news.firebaseio.com/v0/topstories.json",
+      ),
+    ),
   );
-  const storyIds: number[] = await response.json();
-
-  const topStories = storyIds.slice(0, 30);
-
-  const stories = await Promise.all(
-    topStories.map(async (id) => {
-      const storyRes = await fetch(
-        `https://hacker-news.firebaseio.com/v0/item/${id}.json`,
-      );
-      const story = await storyRes.json();
-
-      return {
-        externalId: `hn-${story.id}`,
-        title: story.title || "Untitled",
-        content: story.text || null,
-        url: story.url || `https://news.ycombinator.com/item?id=${story.id}`,
-        author: story.by || null,
-        publishedAt: new Date(story.time * 1000),
-      };
-    }),
-  );
-
+  if (!Array.isArray(ids)) throw new Error("Invalid HN response");
+  const stories = [];
+  for (const id of ids.slice(0, 15)) {
+    const s = JSON.parse(
+      await readBounded(
+        await fetchPublic(
+          `https://hacker-news.firebaseio.com/v0/item/${Number(id)}.json`,
+        ),
+      ),
+    );
+    if (!s || s.deleted || s.dead || !s.title) continue;
+    stories.push({
+      externalId: `hn-${s.id}`,
+      title: s.title,
+      content: s.text || null,
+      url: `https://news.ycombinator.com/item?id=${s.id}`,
+      author: s.by || null,
+      publishedAt: s.time ? new Date(s.time * 1000) : null,
+    });
+  }
   return stories;
 }

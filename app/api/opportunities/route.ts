@@ -1,13 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-
+import { listOpportunities } from "@/lib/opportunities";
 export async function GET() {
-  const opportunities = await prisma.opportunity.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      evidence: true,
-    },
-  });
-
-  return NextResponse.json(opportunities);
+  return NextResponse.json(await listOpportunities());
 }

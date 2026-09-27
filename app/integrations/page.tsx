@@ -1,11 +1,11 @@
 import { DemoNotice } from "@/components/product-ui";
 const integrations = [
-  { name: "Slack", status: "Подключено" },
-  { name: "Notion", status: "Подключено" },
-  { name: "Stripe", status: "Не подключено" },
-  { name: "Linear", status: "Не подключено" },
-  { name: "HubSpot", status: "Не подключено" },
-  { name: "Google Analytics", status: "Подключено" },
+  { name: "Slack", status: "Не реализовано" },
+  { name: "Notion", status: "Не реализовано" },
+  { name: "Stripe", status: "Не реализовано" },
+  { name: "Linear", status: "Не реализовано" },
+  { name: "HubSpot", status: "Не реализовано" },
+  { name: "Google Analytics", status: "Не реализовано" },
 ];
 
 export default function IntegrationsPage() {

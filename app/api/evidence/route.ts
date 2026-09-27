@@ -1,44 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-
+import { listOpportunities } from "@/lib/opportunities";
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const opportunityId = searchParams.get("opportunityId");
-
-  let evidence;
-
-  if (opportunityId && opportunityId !== "all") {
-    evidence = await prisma.evidence.findMany({
-      where: { opportunityId },
-      include: {
-        signal: {
-          include: {
-            rawItem: {
-              include: {
-                source: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  } else {
-    evidence = await prisma.evidence.findMany({
-      include: {
-        signal: {
-          include: {
-            rawItem: {
-              include: {
-                source: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  return NextResponse.json(evidence);
+  const id = new URL(request.url).searchParams.get("opportunityId");
+  const records = (await listOpportunities()).filter(
+    (o) => !id || id === "all" || o.id === id,
+  );
+  return NextResponse.json(
+    records.flatMap((o) =>
+      o.evidence.map((e) => ({ ...e, opportunityId: o.id })),
+    ),
+  );
 }

@@ -58,25 +58,31 @@ node --experimental-strip-types --test --test-isolation=none tests/*.test.ts
 
 This mode still performs TypeScript checking. It does not ignore build errors.
 
-## Data and validation limits
+## Pipeline and evidence limits
 
-The UI reports missing information instead of inventing market size, timing,
-competition or monetization. Existing database opportunities may have legacy
-scores derived from generation confidence; they are displayed as preliminary
-and are never used to assign BUILD. Newly generated opportunities keep their
-supporting evidence and use the existing scoring heuristic independently.
+Source → RawItem → Signal → Normalize → Cluster → Pattern → Opportunity → Score → Evidence → Validation now retains exact member IDs and source quotes. Generate with POST /api/opportunities/generate and a patternId from /api/patterns. Old keyword-based clusterName generation and arbitrary /api/analyze input are no longer supported.
 
-Validation considers up to 40 linked materials. The baseline gate requires three
-distinct raw items with claims and HTTP(S) source links from at least two source
-records. This is a product guardrail, not statistical validation or proof of
-independence. AI arguments must reference supplied evidence IDs; malformed answers
-and invented IDs are rejected. A source link establishes provenance, not truth.
-Existing signal relevance, grouping and scoring remain heuristics needing further
-evaluation. Complaint signals are no longer automatically classified as negative.
+Only signals with public non-placeholder URLs, exact source quotes and matching generation provenance contribute to an opportunity. Legacy hypotheses remain visible with a warning; their unsupported evidence and old stored scores are excluded. Score is a transparent evidence-support heuristic (material count, publication-host diversity, model-assigned signal strength), not market attractiveness, growth, revenue or success probability.
 
-Validation reports currently live only on the open page; history and persistent
-confidence are not implemented. Authentication screens are prototypes, not access
-control. This is a local MVP; do not expose its mutation APIs publicly before
-adding authentication and authorization. AI provider calls and source ingestion
-depend on external services. Next step: persist reports and generated research
-fields with source references, and evaluate ingestion/relevance quality.
+Validation considers up to 40 materials and returns their snapshot. BUILD requires at least three distinct materials across two source records and two publication hosts in the positively cited subset, plus the model's verdict/confidence gate. These are conservative product guardrails, not statistical proof of independence or demand. Reports are not persisted beyond the open page.
+
+GitHub imports 15 recent open issues (optionally scoped to a repository); Hacker News imports 15 top story records, not linked articles or comment threads; RSS reads the configured feed. Source creation is currently available through POST /api/source. A legacy RSS source pointing to example.com must be replaced with a real feed configuration; it will now report an error instead of importing unrelated fixed feeds. Failed extractions can be retried through POST /api/signals/extract with rawItemId. Batch extraction handles pending records only.
+
+Authentication, authorization, scheduled jobs, notifications and remote integrations are not implemented. Profile/preferences/saved items are browser-local. Bind the server to localhost; this remains a single-user local MVP. Source documents are untrusted and AI extraction/generation can still misjudge relevance or combine different problems. No automated rule establishes willingness to pay.
+
+## Audit and repeatable QA
+
+See [the technical audit](docs/TECHNICAL-AUDIT-2026-09-27.md) and [recorded API checks](docs/audit/e2e-2026-09-27.json).
+
+For isolated production QA, migrate a **copy** of the database with a temporary Prisma schema pointing to that copy. DATABASE_URL overrides the application runtime, not the hardcoded default in the Prisma CLI schema. Set FOUNDRY_AUDIT_BUILD=1 for both build and start to use .next-audit without replacing .next. Apply the new additive migration before starting this version, and regenerate the local client with npm run db:setup for the default database.
+
+The regression script deliberately clears/restores evidence on a selected audit-created opportunity. Run only on a disposable database with no concurrent writes:
+
+```powershell
+$env:QA_BASE_URL='http://127.0.0.1:3109'
+$env:QA_OPPORTUNITY_ID='<ID generated on the audit copy>'
+$env:QA_ALLOW_MUTATIONS='1'
+node scripts/qa-pipeline.mjs
+```
+
+It verifies lineage, normalization/generation/extraction idempotency, score reset/restoration, validation guards, invalid requests and page HTTP responses. Live ingestion and first-time AI generation/extraction require network access and provider credentials; their recorded outcomes are separate from deterministic unit tests.

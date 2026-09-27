@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 interface Source {
@@ -55,14 +56,14 @@ export default function SourcesPage() {
       });
       const data = await res.json();
 
-      if (data.imported !== undefined) {
+      if (res.ok && data.imported !== undefined) {
         setMessage(
           `✓ Импортировано ${data.imported} новых записей из ${data.source}` +
             (data.skipped > 0 ? ` (${data.skipped} уже существовали)` : ""),
         );
         setRevision((value) => value + 1);
       } else {
-        setMessage("Ошибка синхронизации. Попробуйте ещё раз.");
+        setMessage(data.error || "Ошибка синхронизации. Попробуйте ещё раз.");
       }
     } catch {
       setMessage("Ошибка синхронизации. Попробуйте ещё раз.");
@@ -87,6 +88,9 @@ export default function SourcesPage() {
         интерпретацию.
       </p>
 
+      <Link className="button-secondary mt-4" href="/signals">
+        Материалы и извлечение →
+      </Link>
       {message && (
         <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-emerald-400">
           {message}
@@ -102,6 +106,9 @@ export default function SourcesPage() {
                 <p className="mt-1 text-sm text-neutral-500">
                   {source._count.rawItems} записей
                 </p>
+                <p className="mt-1 break-all text-xs text-neutral-500">
+                  {source.url || "URL не задан"}
+                </p>
                 {source.lastSyncedAt && (
                   <p className="mt-1 text-xs text-neutral-600">
                     Последняя синхронизация:{" "}
@@ -116,7 +123,11 @@ export default function SourcesPage() {
                     : "bg-yellow-500/15 text-yellow-400"
                 }`}
               >
-                {source.status === "active" ? "Активен" : "Скоро"}
+                {source.status === "active"
+                  ? "Активен"
+                  : source.status === "error"
+                    ? "Ошибка"
+                    : "Отключён"}
               </span>
             </div>
 
