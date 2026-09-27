@@ -1,80 +1,77 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { extractSignals } from "@/lib/ai";
-
+import { readProvenance, signalsFromProvenance } from "@/lib/provenance";
+import { scoreSignals } from "@/lib/scoring";
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const body = await request.json();
-
-  const opportunity = await prisma.opportunity.findUnique({
-    where: { id },
-  });
-
-  if (!opportunity) {
+  const body = z
+    .object({ limit: z.number().int().min(1).max(40).default(5) })
+    .safeParse(await request.json().catch(() => null));
+  if (!body.success)
+    return NextResponse.json({ error: "Некорректный limit" }, { status: 400 });
+  const opportunity = await prisma.opportunity.findUnique({ where: { id } });
+  if (!opportunity)
     return NextResponse.json(
-      { error: "Возможность не найдена. Демо не записывается в базу." },
+      { error: "Возможность не найдена" },
       { status: 404 },
     );
-  }
-
-  // Берём сигналы, которые ещё не привязаны
-  const signals = await prisma.signal.findMany({
-    where: {
-      evidence: { none: { opportunityId: id } },
-    },
-    include: {
-      rawItem: {
-        include: { source: true },
+  const signalIds =
+    readProvenance(opportunity.provenance)?.signals.map((s) => s.signalId) ||
+    [];
+  if (!signalIds.length)
+    return NextResponse.json(
+      {
+        error:
+          "У старой возможности нет сохранённого происхождения. Создайте новую из проверяемого паттерна; автоматическая привязка случайных сигналов отключена.",
       },
-    },
-    take: body.limit || 10,
-  });
-
-  let linked = 0;
-  let skipped = 0;
-
-  // Фильтруем сигналы по релевантности через AI
-  for (const signal of signals) {
-    try {
-      const relevanceCheck = await extractSignals({
-        title: signal.title,
-        content: `${opportunity.title}. ${opportunity.description}. Signal: ${signal.title} ${signal.pain || ""}`,
-        sourceType: "relevance-check",
-      });
-
-      // Если AI считает, что сигнал не релевантен — пропускаем
-      if (!relevanceCheck.is_relevant) {
-        skipped++;
-        continue;
-      }
-
-      // Relevance is not polarity: a complaint about a competitor may support this opportunity.
-      const evidenceType = "neutral";
-
-      await prisma.evidence.create({
+      { status: 409 },
+    );
+  const result = await prisma.$transaction(async (tx) => {
+    const signals = await tx.signal.findMany({
+      where: {
+        id: { in: signalIds },
+        duplicateOf: null,
+        evidence: { none: { opportunityId: id } },
+      },
+      include: { rawItem: { include: { source: true } } },
+      take: body.data.limit,
+    });
+    let linked = 0;
+    for (const s of signalsFromProvenance(opportunity.provenance, signals)) {
+      await tx.evidence.create({
         data: {
           opportunityId: id,
-          signalId: signal.id,
-          claim: signal.title || signal.description || "Signal detected",
-          evidenceType,
-          strength: signal.strength,
-          sourceUrl: signal.rawItem?.url || null,
+          signalId: s.id,
+          claim: s.title,
+          evidenceType: "neutral",
+          strength: s.strength,
+          sourceUrl: s.rawItem.url,
         },
       });
-
       linked++;
-    } catch (error) {
-      console.error(`Failed to check signal ${signal.id}:`, error);
-      skipped++;
     }
-  }
-
-  return NextResponse.json({
-    linked,
-    skipped,
-    total: signals.length,
+    const evidence = await tx.evidence.findMany({
+      where: { opportunityId: id },
+      include: {
+        signal: { include: { rawItem: { include: { source: true } } } },
+      },
+    });
+    await tx.opportunity.update({
+      where: { id },
+      data: {
+        score: scoreSignals(
+          signalsFromProvenance(
+            opportunity.provenance,
+            evidence.map((e) => e.signal),
+          ),
+        ).overall,
+      },
+    });
+    return { linked, skipped: 0, total: signals.length };
   });
+  return NextResponse.json(result);
 }

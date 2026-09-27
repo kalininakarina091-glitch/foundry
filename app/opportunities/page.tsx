@@ -25,6 +25,13 @@ export default async function OpportunitiesPage({
         )}
       </PageHeader>
       {demo && <DemoNotice />}
+      {!demo && opportunities.some((o) => !o.origin) && (
+        <p className="mb-5 text-sm text-amber-200">
+          В базе есть старые гипотезы без истории генерации. Их доказательства
+          исключены из оценки; для исследования создайте новую гипотезу из
+          паттерна.
+        </p>
+      )}
       {opportunities.length ? (
         <OpportunityCatalog
           key={`${q ?? ""}:${view ?? ""}`}

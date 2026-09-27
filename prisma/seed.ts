@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/index.js";
 
 const prisma = new PrismaClient();
 
@@ -19,7 +19,7 @@ async function main() {
     {
       name: "RSS Feeds",
       type: "rss",
-      url: "https://example.com/rss",
+      url: "https://techcrunch.com/feed/",
       status: "active",
     },
     {

@@ -39,6 +39,8 @@ export async function POST(request: Request) {
         ...insufficientReport(),
         evidenceStats: stats,
         availableEvidence: opportunity.evidence.length,
+        evidenceSnapshot: evidence,
+        checkedAt: new Date().toISOString(),
       });
     if (!process.env.OPENROUTER_API_KEY)
       return NextResponse.json(
@@ -58,6 +60,8 @@ export async function POST(request: Request) {
       ...report,
       evidenceStats: stats,
       availableEvidence: opportunity.evidence.length,
+      evidenceSnapshot: evidence,
+      checkedAt: new Date().toISOString(),
     });
   } catch {
     return NextResponse.json(

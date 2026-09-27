@@ -1,84 +1,42 @@
 import { prisma } from "@/lib/db";
-
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-zа-я0-9\s]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function extractCustomer(text: string): string | null {
-  const patterns = [
-    /freelancer/i,
-    /smb/i,
-    /small business/i,
-    /startup/i,
-    /developer/i,
-    /agency/i,
-    /dentist/i,
-    /clinic/i,
-    /healthcare/i,
-    /enterprise/i,
-    /indie hacker/i,
-    /solo founder/i,
-  ];
-
-  for (const pattern of patterns) {
-    if (pattern.test(text)) {
-      return pattern.source.replace(/\\/g, "").toLowerCase();
-    }
-  }
-  return null;
-}
-
-export async function normalizeAllSignals(): Promise<{
-  total: number;
-  normalized: number;
-  duplicates: number;
-}> {
+import { normalizeText, traceableUrl } from "@/lib/traceability";
+export async function normalizeAllSignals() {
   const signals = await prisma.signal.findMany({
-    where: { normalizedProblem: null },
+    include: { rawItem: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
   });
-
-  let normalized = 0;
+  const canonical = new Map<string, string>();
   let duplicates = 0;
-
-  for (const signal of signals) {
-    const problem = normalizeText(signal.title || signal.description || "");
-    const customer =
-      signal.customer ||
-      extractCustomer(signal.title || signal.description || "");
-
-    // Проверяем на дубликат
-    const existing = await prisma.signal.findFirst({
-      where: {
-        normalizedProblem: problem,
-        id: { not: signal.id },
+  let excluded = 0;
+  for (const s of signals) {
+    const problem = normalizeText(s.title || s.pain || s.description || "");
+    const url = traceableUrl(s.rawItem.url);
+    const original = [s.rawItem.title, s.rawItem.content]
+      .filter(Boolean)
+      .join("\n");
+    const hasQuote =
+      !!s.description &&
+      s.description.trim().length >= 12 &&
+      original.includes(s.description);
+    // The same problem in independent documents is corroboration, not a duplicate.
+    const eligible = !!url && !!problem && hasQuote;
+    const duplicateOf = eligible ? canonical.get(url) || null : null;
+    if (eligible && !duplicateOf) canonical.set(url, s.id);
+    else if (duplicateOf) duplicates++;
+    if (!url || !problem || !hasQuote) excluded++;
+    await prisma.signal.update({
+      where: { id: s.id },
+      data: {
+        normalizedProblem: url && problem && hasQuote ? problem : null,
+        normalizedCustomer: s.customer ? normalizeText(s.customer) : null,
+        duplicateOf,
       },
     });
-
-    if (existing) {
-      await prisma.signal.update({
-        where: { id: signal.id },
-        data: {
-          normalizedProblem: problem,
-          normalizedCustomer: customer,
-          duplicateOf: existing.id,
-        },
-      });
-      duplicates++;
-    } else {
-      await prisma.signal.update({
-        where: { id: signal.id },
-        data: {
-          normalizedProblem: problem,
-          normalizedCustomer: customer,
-        },
-      });
-      normalized++;
-    }
   }
-
-  return { total: signals.length, normalized, duplicates };
+  return {
+    total: signals.length,
+    normalized: signals.length - excluded,
+    duplicates,
+    excluded,
+  };
 }

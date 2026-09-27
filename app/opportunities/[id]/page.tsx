@@ -30,6 +30,28 @@ export default async function OpportunityDetailPage({
         ← Все возможности
       </Link>
       <div className="mt-7">{demo && <DemoNotice />}</div>
+      {!demo && (
+        <div className="my-4 rounded-xl border p-4 text-xs leading-6 text-muted-foreground">
+          {opportunity.origin ? (
+            <p className="break-all">
+              Происхождение: {opportunity.origin.clusterId} →{" "}
+              {opportunity.origin.patternId} → эта гипотеза. Сохранено{" "}
+              {opportunity.origin.signalIds.length} исходных сигналов.
+            </p>
+          ) : (
+            <p>
+              Старая запись без сохранённого происхождения генерации. Данные
+              требуют повторного исследования.
+            </p>
+          )}
+          {!!opportunity.excludedEvidence && (
+            <p>
+              Исключено {opportunity.excludedEvidence} недостоверных ссылок или
+              повторных материалов. Исходные записи сохранены для аудита.
+            </p>
+          )}
+        </div>
+      )}
       <header className="flex flex-wrap justify-between gap-6 border-b border-border pb-7">
         <div className="min-w-0 flex-1 basis-80">
           <div className="mb-3 flex flex-wrap items-center gap-3">

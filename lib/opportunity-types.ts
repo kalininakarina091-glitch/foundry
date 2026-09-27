@@ -1,6 +1,8 @@
 export interface EvidenceView {
   id: string;
   claim: string | null;
+  quote?: string | null;
+  sourceText?: string;
   type: string;
   strength: number;
   signalId: string;
@@ -11,8 +13,11 @@ export interface EvidenceView {
   rawItemId: string;
   url: string | null;
   date: string;
+  dateKind?: "published" | "captured";
 }
 export interface OpportunityView {
+  origin?: { patternId: string; clusterId: string; signalIds: string[] };
+  excludedEvidence?: number;
   id: string;
   title: string;
   description: string | null;

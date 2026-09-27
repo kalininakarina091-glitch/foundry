@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output = "../generated/prisma"
 }
 
 datasource db {
@@ -33,10 +34,13 @@ model RawItem {
   author       String?
   publishedAt  DateTime?
   fetchedAt    DateTime  @default(now())
+  extractionStatus String @default("pending")
+  extractedAt DateTime?
   metadata     String?   // JSON string
 
   source       Source    @relation(fields: [sourceId], references: [id])
   signals      Signal[]
+  @@index([sourceId, externalId])
 }
 
 // ─── Signal ───────────────────────────────────────────
@@ -75,6 +79,7 @@ model Evidence {
 
   signal         Signal    @relation(fields: [signalId], references: [id])
   opportunity    Opportunity @relation(fields: [opportunityId], references: [id])
+  @@index([opportunityId, signalId])
 }
 
 // ─── Opportunity ──────────────────────────────────────
@@ -89,4 +94,7 @@ model Opportunity {
   createdAt    DateTime  @default(now())
 
   evidence     Evidence[]
+  generationKey String? @unique
+  provenance String?
+  research String?
 }

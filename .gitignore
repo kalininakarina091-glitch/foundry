@@ -51,3 +51,6 @@ prisma/*.db-*
 .cursor/
 .devin/
 !.env.example
+/generated/
+
+/.next-audit/

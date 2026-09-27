@@ -7,7 +7,11 @@ import {
   EvidenceCard,
   PageHeader,
 } from "@/components/product-ui";
-import { opportunityHref, type OpportunityView } from "@/lib/opportunity-types";
+import {
+  opportunityHref,
+  type OpportunityView,
+  type EvidenceView,
+} from "@/lib/opportunity-types";
 import { validationSchema, type ValidationReport } from "@/lib/validation";
 
 const verdicts = {
@@ -26,6 +30,10 @@ export default function ValidationPanel({
   opportunity: OpportunityView;
 }) {
   const [report, setReport] = useState<ValidationReport | null>(null);
+  const [checkedEvidence, setCheckedEvidence] = useState<EvidenceView[] | null>(
+    null,
+  );
+  const materials = checkedEvidence ?? opportunity.evidence.slice(0, 40);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   async function validate() {
@@ -42,6 +50,7 @@ export default function ValidationPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Проверка не завершена.");
       setReport(validationSchema.parse(data));
+      setCheckedEvidence(data.evidenceSnapshot);
     } catch (e) {
       setError(
         e instanceof Error && e.name !== "ZodError"
@@ -197,11 +206,11 @@ export default function ValidationPanel({
               </div>
             </div>
           )}
-          {opportunity.evidence.length > 0 && (
+          {materials.length > 0 && (
             <section className="mt-10">
               <h2 className="mb-4 text-lg font-semibold">Материалы проверки</h2>
               <div className="space-y-3">
-                {opportunity.evidence.slice(0, 40).map((e) => (
+                {materials.map((e) => (
                   <div
                     id={`evidence-${e.id}`}
                     key={e.id}

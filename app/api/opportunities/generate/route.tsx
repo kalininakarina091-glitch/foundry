@@ -1,109 +1,116 @@
-import { scoreOpportunity } from "@/lib/scoring";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { detectPatterns } from "@/lib/patterns";
 import { generateOpportunityFromCluster } from "@/lib/opportunity-generator";
-
+import { scoreSignals } from "@/lib/scoring";
+import { AI_MODEL } from "@/lib/ai";
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
-  const clusterName = body?.clusterName;
-  if (typeof clusterName !== "string" || !clusterName.trim())
-    return NextResponse.json({ error: "Укажите паттерн." }, { status: 400 });
-
-  // Определяем ключевые слова для поиска
-  let keywords: string[] = [];
-
-  if (
-    clusterName.includes("smb") ||
-    clusterName.includes("compliance") ||
-    clusterName.includes("regulatory")
-  ) {
-    keywords = ["compliance", "regulatory", "smb", "small business"];
-  } else if (
-    clusterName.includes("freelancer") ||
-    clusterName.includes("profitability")
-  ) {
-    keywords = ["freelancer", "profitability", "project"];
-  } else if (
-    clusterName.includes("microsaas") ||
-    clusterName.includes("micro-saas") ||
-    clusterName.includes("research")
-  ) {
-    keywords = [
-      "microsaas",
-      "micro-saas",
-      "customer research",
-      "validate",
-      "validation",
-    ];
-  } else {
-    keywords = [clusterName];
-  }
-
-  // Получаем ВСЕ сигналы
-  const allSignals = await prisma.signal.findMany({
-    where: { duplicateOf: null },
-    include: {
-      rawItem: {
-        include: { source: true },
-      },
-    },
-  });
-
-  // Фильтруем по ключевым словам
-  const signals = allSignals.filter((signal) => {
-    const text =
-      `${signal.normalizedProblem || ""} ${signal.title || ""} ${signal.description || ""}`.toLowerCase();
-    return keywords.some((keyword) => text.includes(keyword.toLowerCase()));
-  });
-
-  if (signals.length < 2) {
+  const parsed = z
+    .object({ patternId: z.string().min(1).max(200) })
+    .safeParse(await request.json().catch(() => null));
+  if (!parsed.success)
     return NextResponse.json(
       {
-        error: `Недостаточно сигналов для создания opportunity (найдено: ${signals.length})`,
+        error:
+          "Передайте patternId из /api/patterns; поиск по ключевым словам больше не поддерживается.",
       },
       { status: 400 },
     );
-  }
-
+  const existing = await prisma.opportunity.findUnique({
+    where: { generationKey: parsed.data.patternId },
+  });
+  if (existing)
+    return NextResponse.json({
+      ...existing,
+      savedId: existing.id,
+      reused: true,
+    });
+  const pattern = (await detectPatterns()).find(
+    (p) => p.id === parsed.data.patternId,
+  );
+  if (!pattern?.shouldCreateOpportunity)
+    return NextResponse.json(
+      { error: "Паттерн отсутствует или устарел. Обновите список." },
+      { status: 409 },
+    );
+  if (pattern.signalIds.length > 40)
+    return NextResponse.json(
+      {
+        error:
+          "Кластер превышает текущий лимит 40 сигналов; требуется ручное уточнение.",
+      },
+      { status: 422 },
+    );
+  if (!process.env.OPENROUTER_API_KEY)
+    return NextResponse.json(
+      { error: "AI-провайдер не настроен" },
+      { status: 503 },
+    );
   try {
-    const opportunity = await generateOpportunityFromCluster(
-      clusterName,
+    const signals = await prisma.signal.findMany({
+      where: { id: { in: pattern.signalIds } },
+      include: { rawItem: { include: { source: true } } },
+    });
+    const result = await generateOpportunityFromCluster(
+      pattern.clusterName,
       signals,
     );
-
-    const saved = await prisma.opportunity.create({
-      data: {
-        title: opportunity.title,
-        description: opportunity.problem,
-        industry: opportunity.opportunity_type,
-        score: 0,
+    const supporting = signals.filter((s) =>
+      result.supporting_signal_ids.includes(s.id),
+    );
+    const score = scoreSignals(supporting);
+    const provenance = JSON.stringify({
+      version: 1,
+      createdAt: new Date().toISOString(),
+      model: AI_MODEL,
+      pattern,
+      signals: supporting.map((s) => ({
+        signalId: s.id,
+        rawItemId: s.rawItemId,
+        sourceId: s.rawItem.sourceId,
+        url: s.rawItem.url,
+        quote: s.description,
+        claim: s.title,
+      })),
+    });
+    const saved = await prisma.opportunity.upsert({
+      where: { generationKey: pattern.id },
+      update: {},
+      create: {
+        generationKey: pattern.id,
+        provenance,
+        research: JSON.stringify(result),
+        title: result.title,
+        description: result.problem,
+        industry: result.opportunity_type,
+        score: score.overall,
         evidence: {
-          create: signals.map((signal) => ({
-            signalId: signal.id,
-            claim: signal.title || signal.description,
+          create: supporting.map((s) => ({
+            signalId: s.id,
+            claim: s.title,
             evidenceType: "neutral",
-            strength: signal.strength,
-            sourceUrl: signal.rawItem.url,
+            strength: s.strength,
+            sourceUrl: s.rawItem.url,
           })),
         },
       },
     });
-
-    const score = await scoreOpportunity(saved.id);
-    await prisma.opportunity.update({
-      where: { id: saved.id },
-      data: { score: score.overall },
-    });
     return NextResponse.json({
-      ...opportunity,
-      score: score.overall,
+      ...result,
       savedId: saved.id,
+      score: saved.score,
+      patternId: pattern.id,
+      supporting_signals: supporting.length,
+      source_count: score.sources,
     });
-  } catch (error) {
-    console.error("Generation error:", error);
+  } catch {
     return NextResponse.json(
-      { error: "Ошибка генерации opportunity" },
-      { status: 500 },
+      {
+        error:
+          "Не удалось получить корректную гипотезу со ссылками на сигналы. Данные не записаны.",
+      },
+      { status: 502 },
     );
   }
 }

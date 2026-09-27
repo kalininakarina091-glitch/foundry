@@ -1,74 +1,35 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { extractSignals } from "@/lib/ai";
-
-export const maxDuration = 120;
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
+import { extractRawItem } from "@/lib/extraction";
+export const maxDuration = 300;
 export async function POST(request: Request) {
-  const body = await request.json();
-  const limit = body.limit || 5;
-
-  const rawItems = await prisma.rawItem.findMany({
-    where: {
-      signals: { none: {} },
-    },
-    include: { source: true },
-    take: limit,
+  const body = z
+    .object({ limit: z.number().int().min(1).max(5).default(3) })
+    .safeParse(await request.json().catch(() => null));
+  if (!body.success)
+    return NextResponse.json(
+      { error: "limit должен быть от 1 до 5" },
+      { status: 400 },
+    );
+  if (!process.env.OPENROUTER_API_KEY)
+    return NextResponse.json(
+      { error: "AI-провайдер не настроен" },
+      { status: 503 },
+    );
+  const records = await prisma.rawItem.findMany({
+    where: { extractionStatus: "pending", signals: { none: {} } },
+    orderBy: [{ fetchedAt: "asc" }, { id: "asc" }],
+    take: body.data.limit,
   });
-
-  if (rawItems.length === 0) {
-    return NextResponse.json({
-      processed: 0,
-      message: "Нет RawItems для обработки",
-    });
-  }
-
-  let relevant = 0;
-  let skipped = 0;
-  let errors = 0;
-
-  for (const rawItem of rawItems) {
-    try {
-      const extraction = await extractSignals({
-        title: rawItem.title,
-        content: rawItem.content,
-        sourceType: rawItem.source.type,
-      });
-
-      if (!extraction.is_relevant) {
-        skipped++;
-      } else {
-        await prisma.signal.create({
-          data: {
-            rawItemId: rawItem.id,
-            type: extraction.signal_type || "trend",
-            title: extraction.problem || rawItem.title,
-            description: extraction.pain_point || rawItem.content,
-            pain: extraction.pain_point,
-            customer: extraction.customer,
-            industry: extraction.industry,
-            strength: extraction.strength,
-          },
-        });
-        relevant++;
-      }
-    } catch (error) {
-      console.error(`Failed to process ${rawItem.id}:`, error);
-      errors++;
-    }
-
-    // Ждём 15 секунд между запросами (лимит Gemini: 5/мин)
-    await sleep(15000);
-  }
-
+  const results = [];
+  for (const raw of records)
+    results.push({ rawItemId: raw.id, ...(await extractRawItem(raw.id)) });
   return NextResponse.json({
-    processed: rawItems.length,
-    relevant,
-    skipped,
-    errors,
+    processed: results.length,
+    relevant: results.filter((r) => r.is_relevant).length,
+    skipped: results.filter((r) => r.skipped || r.is_relevant === false).length,
+    errors: results.filter((r) => r.status >= 400).length,
+    results,
   });
 }

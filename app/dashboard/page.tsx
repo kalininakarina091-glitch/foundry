@@ -64,6 +64,13 @@ export default async function DashboardPage({
         </Link>
       </header>
       {demo && <DemoNotice />}
+      {!demo && opportunities.some((o) => !o.origin) && (
+        <p className="mb-5 text-sm text-amber-200">
+          В базе есть старые гипотезы без полной истории происхождения. Их
+          названия не подтверждают спрос; исключённые доказательства не
+          учитываются в Score.
+        </p>
+      )}
       <div className="stats-grid">
         {stats.map(({ value, label, icon: Icon, tone }) => (
           <div className="stat-card" key={label}>
@@ -79,8 +86,9 @@ export default async function DashboardPage({
       </div>
       <OpportunityWorkspace opportunities={opportunities} />
       <p className="dashboard-footnote">
-        Opportunity Score — предварительная оценка привлекательности.
-        Уверенность в выводе определяется отдельно при проверке.
+        Opportunity Score — эвристическая поддержка исходными материалами, не
+        оценка размера рынка. Уверенность в выводе определяется отдельно при
+        проверке.
       </p>
     </div>
   );

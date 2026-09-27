@@ -68,7 +68,7 @@ export function ScoreBadge({ score }: { score: number }) {
   return (
     <div
       className="shrink-0 text-right"
-      title="Предварительная оценка привлекательности, не уверенность в выводе"
+      title="Эвристическая оценка поддержки материалами, не вероятность успеха"
     >
       <p className="text-xs text-muted-foreground">Opportunity Score</p>
       <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">
@@ -119,6 +119,7 @@ export function EvidenceCard({ evidence }: { evidence: EvidenceView }) {
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
         <span>
           {evidence.source} ·{" "}
+          {evidence.dateKind === "captured" ? "Получено " : ""}{" "}
           {new Date(evidence.date).toLocaleDateString("ru-RU", {
             timeZone: "UTC",
           })}
@@ -136,6 +137,11 @@ export function EvidenceCard({ evidence }: { evidence: EvidenceView }) {
           <span>Ссылка на источник отсутствует</span>
         )}
       </div>
+      {evidence.quote && (
+        <blockquote className="mt-3 border-l-2 pl-3 text-xs leading-6 text-muted-foreground">
+          {evidence.quote}
+        </blockquote>
+      )}
       <details className="mt-3 text-xs text-muted-foreground">
         <summary className="cursor-pointer">Происхождение</summary>
         <p className="mt-2 break-all leading-5">
