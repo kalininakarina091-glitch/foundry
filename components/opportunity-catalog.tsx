@@ -1,43 +1,16 @@
 "use client";
-import { useState, useSyncExternalStore } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { personalRank, type MatchResult } from "@/lib/personalization";
 import { Bookmark, Grid2X2, List, Search, Download } from "lucide-react";
 import OpportunityCard from "@/components/opportunity-card";
 import { usePreferences } from "@/lib/use-preferences";
 import { EmptyState } from "@/components/product-ui";
 import type { OpportunityView } from "@/lib/opportunity-types";
-const storageKey = "foundry:bookmarks:v1";
-function subscribe(callback: () => void) {
-  window.addEventListener("storage", callback);
-  window.addEventListener("foundry-bookmarks", callback);
-  return () => {
-    window.removeEventListener("storage", callback);
-    window.removeEventListener("foundry-bookmarks", callback);
-  };
-}
-function snapshot() {
-  try {
-    return localStorage.getItem(storageKey) || "[]";
-  } catch {
-    return "[]";
-  }
-}
-function bookmarkId(o: OpportunityView) {
-  return `${o.demo ? "demo" : "project"}:${o.id}`;
-}
-function parseSaved(value: string): string[] {
-  try {
-    const result: unknown = JSON.parse(value);
-    return Array.isArray(result)
-      ? result.filter((v): v is string => typeof v === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
 export default function OpportunityCatalog({
   opportunities,
   initialQuery = "",
-  initialView = "all",
+  initialView = "for-you",
 }: {
   opportunities: OpportunityView[];
   initialQuery?: string;
@@ -45,37 +18,79 @@ export default function OpportunityCatalog({
 }) {
   const preferences = usePreferences();
   const [query, setQuery] = useState(initialQuery);
-  const [tab, setTab] = useState(initialView === "saved" ? "saved" : "all");
+  const [tab, setTab] = useState(
+    ["saved", "all"].includes(initialView) ? initialView : "for-you",
+  );
   const [category, setCategory] = useState("");
   const [score, setScore] = useState("");
   const [status, setStatus] = useState("");
   const [sortOverride, setSort] = useState<string | null>(null);
-  const sort = sortOverride ?? preferences.catalogSort;
+  const sort =
+    sortOverride ?? (tab === "for-you" ? "match" : preferences.catalogSort);
   const [layoutOverride, setLayout] = useState<string | null>(null);
   const layout = layoutOverride ?? preferences.catalogLayout;
   const [pagination, setPagination] = useState({ key: "", page: 1 });
   const [error, setError] = useState("");
-  const saved = parseSaved(
-    useSyncExternalStore(subscribe, snapshot, () => "[]"),
-  );
-  function toggleSave(o: OpportunityView) {
-    const id = bookmarkId(o);
-    const current = parseSaved(snapshot());
+  const [personal, setPersonal] = useState<{
+    saved: string[];
+    dismissed: string[];
+    limited: boolean;
+    matches: Record<string, MatchResult>;
+  } | null>(null);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/me/catalog", { cache: "no-store" })
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error);
+        if (active) setPersonal(data);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const saved = personal?.saved || [];
+  async function action(o: OpportunityView, kind: "saved" | "feedback") {
+    if (o.demo) {
+      setError("Демонстрационные возможности не сохраняются в аккаунте.");
+      return;
+    }
+    const key = kind === "saved" ? "saved" : "dismissed";
+    const active = !(personal?.[key] || []).includes(o.id);
     try {
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify(
-          current.includes(id)
-            ? current.filter((v) => v !== id)
-            : [...current, id],
-        ),
+      const r = await fetch("/api/me/" + kind, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opportunityId: o.id, active }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
+      setPersonal((p) =>
+        p
+          ? {
+              ...p,
+              [key]: active
+                ? [...new Set([...p[key], o.id])]
+                : p[key].filter((id) => id !== o.id),
+              matches:
+                kind === "feedback" && p.matches[o.id]
+                  ? {
+                      ...p.matches,
+                      [o.id]: {
+                        ...p.matches[o.id],
+                        feedbackPenalty: active ? 5 : 0,
+                      },
+                    }
+                  : p.matches,
+            }
+          : p,
       );
-      window.dispatchEvent(new Event("foundry-bookmarks"));
       setError("");
-    } catch {
-      setError(
-        "Браузер не разрешает сохранение. Проверьте настройки хранилища.",
-      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось сохранить");
     }
   }
   const matchesTab = (o: OpportunityView, value: string) =>
@@ -86,9 +101,10 @@ export default function OpportunityCatalog({
         : value === "reviewed"
           ? o.status === "validated"
           : value === "saved"
-            ? saved.includes(bookmarkId(o))
+            ? saved.includes(o.id)
             : true;
   const tabs = [
+    { id: "for-you", label: "Для вас" },
     { id: "all", label: "Все возможности" },
     { id: "high", label: "Score 80+" },
     { id: "research", label: "К исследованию" },
@@ -107,11 +123,20 @@ export default function OpportunityCatalog({
           .includes(query.trim().toLocaleLowerCase("ru")),
     )
     .sort((a, b) =>
-      sort === "score"
-        ? b.score - a.score
-        : sort === "evidence"
-          ? b.evidence.length - a.evidence.length
-          : (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+      sort === "match"
+        ? personalRank(
+            personal?.matches[b.id] ||
+              ({ score: null, feedbackPenalty: 0 } as MatchResult),
+          ) -
+            personalRank(
+              personal?.matches[a.id] ||
+                ({ score: null, feedbackPenalty: 0 } as MatchResult),
+            ) || b.score - a.score
+        : sort === "score"
+          ? b.score - a.score
+          : sort === "evidence"
+            ? b.evidence.length - a.evidence.length
+            : (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
     );
   const paginationKey = JSON.stringify([
     query,
@@ -157,7 +182,10 @@ export default function OpportunityCatalog({
             key={t.id}
             className={tab === t.id ? "active" : ""}
             aria-pressed={tab === t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id);
+              setSort(null);
+            }}
           >
             {t.label}
             <span>
@@ -166,6 +194,23 @@ export default function OpportunityCatalog({
           </button>
         ))}
       </div>
+      {tab === "for-you" && (
+        <div className="personal-notice">
+          <strong>
+            Match Score ≠ Opportunity Score ≠ Validation Confidence
+          </strong>
+          <p>
+            {!personal
+              ? "Загружаем профиль…"
+              : personal.limited
+                ? "Профиль не завершён: персонализация ограничена."
+                : "Ранжирование по известным атрибутам и вашим предпочтениям."}{" "}
+            Неизвестные факторы не выдумываются. «Не для меня» снижает только
+            персональную позицию на 5 пунктов.
+          </p>
+          <Link href="/settings/personalization">Изменить профиль →</Link>
+        </div>
+      )}
       <div className="catalog-controls">
         <div className="table-filters">
           <select
@@ -210,7 +255,8 @@ export default function OpportunityCatalog({
             value={sort}
             onChange={(e) => setSort(e.target.value)}
           >
-            <option value="score">По Score</option>
+            {tab === "for-you" && <option value="match">По Match Score</option>}
+            <option value="score">По Opportunity Score</option>
             <option value="evidence">По доказательствам</option>
             <option value="recent">Сначала новые</option>
           </select>
@@ -260,8 +306,7 @@ export default function OpportunityCatalog({
       {tab === "saved" && (
         <p className="bookmark-note">
           <Bookmark size={14} />
-          Избранное хранится в этом браузере. Демо и данные проекта сохраняются
-          отдельно.
+          Избранное сохраняется на сервере только для вашего аккаунта.
         </p>
       )}
       {error && (
@@ -277,8 +322,11 @@ export default function OpportunityCatalog({
             <OpportunityCard
               key={o.id}
               opportunity={o}
-              saved={saved.includes(bookmarkId(o))}
-              onToggleSave={() => toggleSave(o)}
+              saved={saved.includes(o.id)}
+              onToggleSave={() => action(o, "saved")}
+              match={tab === "for-you" ? personal?.matches[o.id] : undefined}
+              dismissed={personal?.dismissed.includes(o.id) || false}
+              onDismiss={() => action(o, "feedback")}
             />
           ))}
         </div>

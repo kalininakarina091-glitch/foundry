@@ -49,14 +49,16 @@ export default function SettingsWorkspace({
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
   const preferences = usePreferences();
-  function save(patch: Partial<Preferences>) {
+  async function save(patch: Partial<Preferences>) {
     try {
-      savePreferences(patch);
+      await savePreferences(patch);
       setFailed(false);
-      setMessage("Изменения сохранены в этом браузере.");
+      setMessage("Изменения сохранены в вашем аккаунте.");
     } catch {
       setFailed(true);
-      setMessage("Не удалось сохранить: браузер запретил доступ к хранилищу.");
+      setMessage(
+        "Не удалось сохранить настройки. Проверьте подключение и повторите.",
+      );
     }
   }
   return (
@@ -241,8 +243,8 @@ export default function SettingsWorkspace({
               <h3>Локальный проект</h3>
               <p>
                 Источники и возможности хранятся в базе проекта. Профиль,
-                избранное и предпочтения интерфейса сохраняются в этом браузере,
-                без синхронизации между устройствами.
+                избранное и предпочтения интерфейса сохраняются на сервере и
+                привязаны к вашему аккаунту.
               </p>
               <p>Аккаунты команды и оплата пока не подключены.</p>
             </div>
@@ -250,8 +252,7 @@ export default function SettingsWorkspace({
         </div>
       )}
       <p className="settings-footer-note">
-        Настройки интерфейса применяются сразу и сохраняются только в этом
-        браузере.
+        Настройки интерфейса сохраняются в вашем аккаунте.
       </p>
     </>
   );
@@ -306,7 +307,7 @@ function Profile({
         <div>
           <h3>{name.trim() || "Ваш профиль"}</h3>
           <p>{email || "Контактный email не указан"}</p>
-          <span className="profile-local-badge">Локальный профиль</span>
+          <span className="profile-local-badge">Профиль аккаунта</span>
         </div>
       </div>
       <form onSubmit={submit} className="profile-form">
@@ -327,6 +328,7 @@ function Profile({
             <input
               className="field"
               value={email}
+              readOnly
               maxLength={254}
               type="email"
               autoComplete="email"
@@ -348,7 +350,7 @@ function Profile({
         </label>
         <span className="profile-counter">{about.length}/200</span>
         <div className="profile-save">
-          <p>Email используется только в локальном профиле.</p>
+          <p>Email используется для входа. Изменение адреса пока недоступно.</p>
           <button className="button-primary" type="submit">
             Сохранить изменения
           </button>

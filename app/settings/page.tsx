@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import SettingsWorkspace from "@/components/settings-workspace";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,9 @@ export default async function SettingsPage() {
         <h1 className="page-title">Настройки</h1>
         <p>Ваш профиль, предпочтения и источники данных.</p>
       </header>
+      <Link className="button-primary mb-6" href="/settings/personalization">
+        Персонализация →
+      </Link>
       <SettingsWorkspace
         sources={sources.map((s) => ({
           id: s.id,

@@ -13,10 +13,16 @@ if (
     "Set QA_BASE_URL (local isolated server), QA_OPPORTUNITY_ID and QA_ALLOW_MUTATIONS=1. This test clears/restores the selected opportunity evidence.",
   );
 const checks = [];
+const authHeaders = {
+  Origin: base,
+  ...(process.env.QA_SESSION_COOKIE
+    ? { Cookie: process.env.QA_SESSION_COOKIE }
+    : {}),
+};
 async function api(path, method = "GET", body, expected = 200) {
   const r = await fetch(base + path, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { ...authHeaders, "Content-Type": "application/json" },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(70000),
   });
@@ -156,7 +162,7 @@ const pages = [
   `/validation/${o.id}`,
 ];
 for (const path of pages) {
-  const r = await fetch(base + path);
+  const r = await fetch(base + path, { headers: authHeaders });
   assert.equal(r.status, 200, path);
   const html = await r.text();
   assert.ok(!html.includes("Application error:"), path);

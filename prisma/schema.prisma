@@ -85,6 +85,9 @@ model Evidence {
 // ─── Opportunity ──────────────────────────────────────
 
 model Opportunity {
+  matchAttributes String?
+  savedBy SavedOpportunity[]
+  feedback OpportunityFeedback[]
   id           String    @id @default(cuid())
   title        String
   description  String?
@@ -97,4 +100,68 @@ model Opportunity {
   generationKey String? @unique
   provenance String?
   research String?
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  name String
+  isAdmin Boolean @default(false)
+  createdAt DateTime @default(now())
+  profile UserProfile?
+  sessions Session[]
+  saved SavedOpportunity[]
+  feedback OpportunityFeedback[]
+}
+model UserProfile {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role String?
+  goals String @default("[]")
+  industries String @default("[]")
+  businessTypes String @default("[]")
+  budget String?
+  team String?
+  time String?
+  skills String @default("[]")
+  markets String @default("[]")
+  onboardingCompleted Boolean @default(false)
+  onboardingSkipped Boolean @default(false)
+  onboardingStep Int @default(0)
+  preferences String @default("{}")
+  about String @default("")
+  updatedAt DateTime @updatedAt
+}
+model Session {
+  tokenHash String @id
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+model SavedOpportunity {
+  userId String
+  opportunityId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([userId, opportunityId])
+}
+model OpportunityFeedback {
+  userId String
+  opportunityId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  kind String
+  createdAt DateTime @default(now())
+  @@id([userId, opportunityId])
+}
+model AuthThrottle {
+  key String @id
+  attempts Int @default(0)
+  expiresAt DateTime
+  @@index([expiresAt])
 }

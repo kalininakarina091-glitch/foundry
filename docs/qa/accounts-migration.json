@@ -1,0 +1,12 @@
+{
+  "marketRowsIdentical": true,
+  "counts": {
+    "Source": 8,
+    "RawItem": 191,
+    "Signal": 44,
+    "Opportunity": 7,
+    "Evidence": 83
+  },
+  "integrity": "ok",
+  "foreignKeyViolations": 0
+}

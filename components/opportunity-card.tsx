@@ -1,3 +1,4 @@
+import type { MatchResult } from "@/lib/personalization";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -13,10 +14,16 @@ export default function OpportunityCard({
   opportunity,
   saved,
   onToggleSave,
+  match,
+  dismissed,
+  onDismiss,
 }: {
   opportunity: OpportunityView;
   saved: boolean;
   onToggleSave: () => void;
+  match?: MatchResult;
+  dismissed?: boolean;
+  onDismiss?: () => void;
 }) {
   const sources = new Set(opportunity.evidence.map((e) => e.sourceId)).size;
   const palette =
@@ -71,6 +78,37 @@ export default function OpportunityCard({
             </div>
           </div>
         </div>
+        {match && (
+          <section className="match-panel">
+            <strong>
+              Match Score: {match.score === null ? "—" : `${match.score}/100`}
+            </strong>
+            <small>
+              Известно факторов: {match.coverage}% веса ·{" "}
+              {match.limited ? "Ограниченная оценка" : "Полная оценка"}
+            </small>
+            <details>
+              <summary>Почему подходит?</summary>
+              <ul>
+                {match.reasons.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+              {match.unknown.length > 0 && (
+                <p>Неизвестно / не заполнено: {match.unknown.join(", ")}</p>
+              )}
+            </details>
+          </section>
+        )}
+        {onDismiss && (
+          <button
+            className="feedback-button"
+            aria-pressed={dismissed}
+            onClick={onDismiss}
+          >
+            {dismissed ? "Отменить «Не для меня»" : "Не для меня"}
+          </button>
+        )}
         <div className="discovery-card-footer">
           <span>
             <Database size={14} />

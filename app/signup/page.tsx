@@ -1,1 +1,4 @@
-export { default } from "../login/page";
+import AuthForm from "@/components/auth-form";
+export default function Signup() {
+  return <AuthForm signup />;
+}

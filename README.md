@@ -68,7 +68,15 @@ Validation considers up to 40 materials and returns their snapshot. BUILD requir
 
 GitHub imports 15 recent open issues (optionally scoped to a repository); Hacker News imports 15 top story records, not linked articles or comment threads; RSS reads the configured feed. Source creation is currently available through POST /api/source. A legacy RSS source pointing to example.com must be replaced with a real feed configuration; it will now report an error instead of importing unrelated fixed feeds. Failed extractions can be retried through POST /api/signals/extract with rawItemId. Batch extraction handles pending records only.
 
-Authentication, authorization, scheduled jobs, notifications and remote integrations are not implemented. Profile/preferences/saved items are browser-local. Bind the server to localhost; this remains a single-user local MVP. Source documents are untrusted and AI extraction/generation can still misjudge relevance or combine different problems. No automated rule establishes willingness to pay.
+Email/password authentication and database-backed sessions are implemented. Profile, preferences, Saved and feedback belong to the signed-in user. Market records remain shared; pipeline mutations require an administrator. Scheduled jobs, notifications and remote integrations are not implemented. Source documents are untrusted and AI extraction/generation can still misjudge relevance or combine different problems. No automated rule establishes willingness to pay.
+
+## Accounts and personalization
+
+Register at `/signup`, complete the six-step onboarding, or skip with limited personalization. Edit all answers at `/settings/personalization`. `/opportunities?view=for-you` ranks the common catalog using a separate deterministic Match Score; `?view=all` keeps the common market ranking. Match Score never changes Opportunity Score, evidence or Validation Confidence.
+
+Apply migrations and regenerate Prisma before starting this version. Outside localhost, set the canonical `APP_ORIGIN` and serve through HTTPS. New accounts are ordinary users; administrator privileges must be assigned by a trusted database operator, never by registration or profile fields. Email verification, password reset, OAuth and MFA are not implemented. Do not use this MVP as a public production identity service without deployment/security review.
+
+See [accounts architecture and final QA](docs/ACCOUNTS-PERSONALIZATION-QA.md) for the schema, algorithm, checks and remaining limitations. Historical audit reports below describe their original revision.
 
 ## Audit and repeatable QA
 
@@ -82,6 +90,7 @@ The regression script deliberately clears/restores evidence on a selected audit-
 $env:QA_BASE_URL='http://127.0.0.1:3109'
 $env:QA_OPPORTUNITY_ID='<ID generated on the audit copy>'
 $env:QA_ALLOW_MUTATIONS='1'
+$env:QA_SESSION_COOKIE='<session of a QA administrator on the disposable copy>'
 node scripts/qa-pipeline.mjs
 ```
 

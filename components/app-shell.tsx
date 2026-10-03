@@ -2,9 +2,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Plus, Settings2 } from "lucide-react";
+import LogoutButton from "@/components/logout-button";
 import Sidebar from "@/components/sidebar";
 import { usePreferences } from "@/lib/use-preferences";
-const AUTH_PATHS = ["/login", "/signup"];
+const AUTH_PATHS = [
+  "/",
+  "/login",
+  "/signup",
+  "/welcome",
+  "/onboarding",
+  "/profile-ready",
+];
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const preferences = usePreferences();
@@ -37,6 +45,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </form>
           <div className="topbar-actions">
+            <LogoutButton />
             <Link href="/sources" className="button-primary">
               <Plus size={16} />
               <span>Собрать сигналы</span>
