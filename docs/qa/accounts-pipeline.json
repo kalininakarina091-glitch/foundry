@@ -1,0 +1,241 @@
+{
+  "ranAt": "2026-10-03T02:48:36.943Z",
+  "opportunityId": "cmujbxrxo0000uwak6k47nb1s",
+  "patternId": "pattern-0621571b7974673ec3cb4bd4",
+  "signalIds": [
+    "cmuiq1rq9003yuwvo2bwhmrom",
+    "cmuiq4fw4004muwvoaelayf8x"
+  ],
+  "score": {
+    "overall": 42,
+    "materials": 2,
+    "sources": 1,
+    "sourceRecords": 2,
+    "averageStrength": 0.8,
+    "method": "evidence-support-v1",
+    "limitations": "Heuristic evidence support using distinct publication hosts, not proven independent witnesses; growth, market size, monetization, competition and risk are not measured."
+  },
+  "validation": "RESEARCH MORE",
+  "checks": [
+    {
+      "path": "/api/opportunities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/cmujbxrxo0000uwak6k47nb1s/score",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/signals/normalize",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/signals/normalize",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/patterns",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/clusters",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/generate",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/generate",
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "path": "/api/opportunities/generate",
+      "method": "POST",
+      "status": 409
+    },
+    {
+      "path": "/api/analyze",
+      "method": "POST",
+      "status": 410
+    },
+    {
+      "path": "/api/signals/extract",
+      "method": "POST",
+      "status": 404
+    },
+    {
+      "path": "/api/signals/extract",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/signals/extract-batch",
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "path": "/api/source",
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "path": "/api/source/missing-source/sync",
+      "method": "POST",
+      "status": 404
+    },
+    {
+      "path": "/api/source/reddit/sync",
+      "method": "POST",
+      "status": 409
+    },
+    {
+      "path": "/api/source/rss-feeds/sync",
+      "method": "POST",
+      "status": 502
+    },
+    {
+      "path": "/api/validate",
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "path": "/api/validate",
+      "method": "POST",
+      "status": 404
+    },
+    {
+      "path": "/api/validate",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/cmujbxrxo0000uwak6k47nb1s/clear-evidence",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/cmujbxrxo0000uwak6k47nb1s/score",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/validate",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/cmujbxrxo0000uwak6k47nb1s/link-signals",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/cmujbxrxo0000uwak6k47nb1s/link-signals",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities/2/link-signals",
+      "method": "POST",
+      "status": 409
+    },
+    {
+      "path": "/dashboard",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/opportunities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/settings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/sources",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/signals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/clusters",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/patterns",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/evidence",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/login",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/signup",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/reports",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/team",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/alerts",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/simulator",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/integrations",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/opportunities/cmujbxrxo0000uwak6k47nb1s",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/validation/cmujbxrxo0000uwak6k47nb1s",
+      "method": "GET",
+      "status": 200
+    }
+  ]
+}

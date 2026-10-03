@@ -1,0 +1,327 @@
+{
+  "ranAt": "2026-10-03T02:48:34.108Z",
+  "passed": 58,
+  "opportunityId": "cmujbxrxo0000uwak6k47nb1s",
+  "marketScore": 42,
+  "matchA": {
+    "score": 100,
+    "coverage": 20,
+    "reasons": [
+      "Тип бизнеса соответствует предпочтениям или цели"
+    ],
+    "unknown": [
+      "Индустрия",
+      "Целевой рынок",
+      "Команда",
+      "Бюджет",
+      "Время",
+      "Навыки"
+    ],
+    "limited": true,
+    "feedbackPenalty": 5
+  },
+  "matchB": {
+    "score": 0,
+    "coverage": 20,
+    "reasons": [
+      "Тип бизнеса вне выбранных предпочтений"
+    ],
+    "unknown": [
+      "Индустрия",
+      "Целевой рынок",
+      "Команда",
+      "Бюджет",
+      "Время",
+      "Навыки"
+    ],
+    "limited": true,
+    "feedbackPenalty": 0
+  },
+  "marketFingerprint": "ba4162b1ee2bb2ab0c8cf8898f1f8f05cc71e93a4ad1023861276a79252ea315",
+  "checks": [
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/api/me/saved",
+      "method": "PUT",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/register",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/auth/register",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/register",
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "path": "/api/opportunities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/catalog",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile?userId=other",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 400
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 403
+    },
+    {
+      "path": "/api/source",
+      "method": "POST",
+      "status": 403
+    },
+    {
+      "path": "/api/me/saved",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/feedback",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/saved",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/feedback",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/saved",
+      "method": "PUT",
+      "status": 400
+    },
+    {
+      "path": "/api/me/catalog",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/catalog",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/preferences",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "path": "/api/me/preferences",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/preferences",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/saved",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/me/feedback",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/me/catalog",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/opportunities",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/welcome",
+      "status": 200
+    },
+    {
+      "path": "/onboarding",
+      "status": 200
+    },
+    {
+      "path": "/profile-ready",
+      "status": 200
+    },
+    {
+      "path": "/settings/personalization",
+      "status": 200
+    },
+    {
+      "path": "/opportunities?view=for-you",
+      "status": 200
+    },
+    {
+      "path": "/opportunities?view=all",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/me/profile",
+      "method": "GET",
+      "status": 401
+    }
+  ]
+}
