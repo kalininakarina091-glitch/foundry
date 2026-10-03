@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { configuredAppOrigin } from "../lib/app-origin.ts";
+import { isNetlifyDeployment } from "../lib/deployment.ts";
 import {
   hashPassword,
   verifyPassword,
@@ -17,6 +19,39 @@ import {
   opportunityAttributes,
   personalRank,
 } from "../lib/personalization.ts";
+test("deployment origin uses public Netlify metadata and still rejects cross-origin mutations", () => {
+  const before = { app: process.env.APP_ORIGIN, deploy: process.env.FOUNDRY_DEPLOY_ORIGIN };
+  try {
+    delete process.env.APP_ORIGIN;
+    process.env.FOUNDRY_DEPLOY_ORIGIN = "https://deploy-preview-5--foundry.netlify.app";
+    assert.equal(configuredAppOrigin(), process.env.FOUNDRY_DEPLOY_ORIGIN);
+    assert.equal(sameOrigin(new Request("https://internal-function/api/auth/login", {
+      headers: { Origin: process.env.FOUNDRY_DEPLOY_ORIGIN },
+    })), true);
+    assert.equal(sameOrigin(new Request("https://internal-function/api/auth/login", {
+      headers: { Origin: "https://evil.test" },
+    })), false);
+    process.env.APP_ORIGIN = "https://configured.example";
+    assert.equal(configuredAppOrigin(), process.env.APP_ORIGIN);
+  } finally {
+    if (before.app === undefined) delete process.env.APP_ORIGIN;
+    else process.env.APP_ORIGIN = before.app;
+    if (before.deploy === undefined) delete process.env.FOUNDRY_DEPLOY_ORIGIN;
+    else process.env.FOUNDRY_DEPLOY_ORIGIN = before.deploy;
+  }
+});
+test("Netlify runtime is explicit and does not use the local SQLite account store", () => {
+  const before = process.env.FOUNDRY_PLATFORM;
+  try {
+    process.env.FOUNDRY_PLATFORM = "netlify";
+    assert.equal(isNetlifyDeployment(), true);
+    process.env.FOUNDRY_PLATFORM = "local";
+    assert.equal(isNetlifyDeployment(), false);
+  } finally {
+    if (before === undefined) delete process.env.FOUNDRY_PLATFORM;
+    else process.env.FOUNDRY_PLATFORM = before;
+  }
+});
 test("password hashes use salts, reject wrong secrets and do not contain plaintext", async () => {
   const password = "correct horse battery staple";
   const a = await hashPassword(password),

@@ -2,8 +2,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { newToken, tokenDigest } from "./auth-crypto";
-export const SESSION_COOKIE = "foundry_session";
+import { SESSION_COOKIE } from "./auth-constants";
+import { configuredAppOrigin } from "./app-origin";
+import { isNetlifyDeployment } from "./deployment";
+export { SESSION_COOKIE } from "./auth-constants";
 export async function sessionUser(token?: string) {
+  // This version has only a local SQLite datasource. Never read it as a
+  // production account store in a serverless deployment.
+  if (isNetlifyDeployment()) return null;
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
   const session = await prisma.session.findUnique({
     where: { tokenHash: tokenDigest(token) },
@@ -40,7 +46,7 @@ export async function createSession(userId: string, request: Request) {
     httpOnly: true,
     sameSite: "lax",
     secure:
-      new URL(process.env.APP_ORIGIN || request.url).protocol === "https:",
+      new URL(configuredAppOrigin() || request.url).protocol === "https:",
     path: "/",
     expires: expiresAt,
   });

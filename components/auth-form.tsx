@@ -1,12 +1,16 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-export default function AuthForm({ signup = false }: { signup?: boolean }) {
+export default function AuthForm({
+  signup = false,
+  unavailable,
+}: { signup?: boolean; unavailable?: string }) {
   const [error, setError] = useState(""),
     [pending, setPending] = useState(false),
     [show, setShow] = useState(false);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (unavailable) return;
     setPending(true);
     setError("");
     const data = Object.fromEntries(new FormData(e.currentTarget));
@@ -34,6 +38,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         <p>
           Исследуйте возможности. Сохраняйте решения на основе доказательств.
         </p>
+        {unavailable && <p role="status">{unavailable}</p>}
         <form onSubmit={submit} className="account-form">
           {signup && (
             <label>
@@ -90,7 +95,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
               {error}
             </p>
           )}
-          <button className="button-primary" disabled={pending}>
+          <button className="button-primary" disabled={pending || !!unavailable}>
             {pending ? "Подождите…" : signup ? "Создать аккаунт →" : "Войти →"}
           </button>
         </form>

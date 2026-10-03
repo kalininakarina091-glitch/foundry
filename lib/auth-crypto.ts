@@ -30,14 +30,4 @@ export function tokenDigest(token: string) {
 export function newToken() {
   return randomBytes(32).toString("base64url");
 }
-export function sameOrigin(request: Request) {
-  try {
-    return (
-      request.headers.get("origin") ===
-        new URL(process.env.APP_ORIGIN || request.url).origin &&
-      request.headers.get("sec-fetch-site") !== "cross-site"
-    );
-  } catch {
-    return false;
-  }
-}
+export { sameOrigin } from "./app-origin.ts";

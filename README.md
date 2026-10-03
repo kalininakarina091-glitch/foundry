@@ -72,6 +72,8 @@ Email/password authentication and database-backed sessions are implemented. Prof
 
 ## Accounts and personalization
 
+Netlify preview deployment notes and the exact adapter failure/fix are in [NETLIFY-DEPLOYMENT.md](docs/NETLIFY-DEPLOYMENT.md). This SQLite revision deploys public landing/login/signup screens there, while database-backed operations return 503 with a clear configuration message. It does not use build-time SQLite as a persistent production account store. Local runtime retains the full account/pipeline functionality.
+
 Register at `/signup`, complete the six-step onboarding, or skip with limited personalization. Edit all answers at `/settings/personalization`. `/opportunities?view=for-you` ranks the common catalog using a separate deterministic Match Score; `?view=all` keeps the common market ranking. Match Score never changes Opportunity Score, evidence or Validation Confidence.
 
 Apply migrations and regenerate Prisma before starting this version. Outside localhost, set the canonical `APP_ORIGIN` and serve through HTTPS. New accounts are ordinary users; administrator privileges must be assigned by a trusted database operator, never by registration or profile fields. Email verification, password reset, OAuth and MFA are not implemented. Do not use this MVP as a public production identity service without deployment/security review.
