@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { isNetlifyDeployment, DATABASE_DEPLOYMENT_MESSAGE } from "@/lib/deployment";
+import { databaseConfigured, DATABASE_DEPLOYMENT_MESSAGE } from "@/lib/deployment";
 export default async function Home() {
   if (await currentUser()) redirect("/opportunities?view=for-you");
   return (
@@ -31,7 +31,7 @@ export default async function Home() {
         <p className="account-hint">
           Match Score помогает выбирать. Доказательства помогают проверять.
         </p>
-        {isNetlifyDeployment() && <p role="status">{DATABASE_DEPLOYMENT_MESSAGE}</p>}
+        {!databaseConfigured() && <p role="status">{DATABASE_DEPLOYMENT_MESSAGE}</p>}
       </section>
     </main>
   );

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { configuredAppOrigin } from "../lib/app-origin.ts";
-import { isNetlifyDeployment } from "../lib/deployment.ts";
+import { databaseConfigured } from "../lib/deployment.ts";
 import {
   hashPassword,
   verifyPassword,
@@ -40,16 +40,20 @@ test("deployment origin uses public Netlify metadata and still rejects cross-ori
     else process.env.FOUNDRY_DEPLOY_ORIGIN = before.deploy;
   }
 });
-test("Netlify runtime is explicit and does not use the local SQLite account store", () => {
-  const before = process.env.FOUNDRY_PLATFORM;
+test("database guard accepts PostgreSQL and rejects missing, malformed and SQLite configuration", () => {
+  const before = process.env.DATABASE_URL;
   try {
-    process.env.FOUNDRY_PLATFORM = "netlify";
-    assert.equal(isNetlifyDeployment(), true);
-    process.env.FOUNDRY_PLATFORM = "local";
-    assert.equal(isNetlifyDeployment(), false);
+    for (const value of ["", "malformed", "file:prisma/dev.db"]) {
+      process.env.DATABASE_URL = value;
+      assert.equal(databaseConfigured(), false);
+    }
+    process.env.DATABASE_URL = "postgresql://localhost/foundry";
+    assert.equal(databaseConfigured(), true);
+    process.env.DATABASE_URL = "postgres://localhost/foundry";
+    assert.equal(databaseConfigured(), true);
   } finally {
-    if (before === undefined) delete process.env.FOUNDRY_PLATFORM;
-    else process.env.FOUNDRY_PLATFORM = before;
+    if (before === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = before;
   }
 });
 test("password hashes use salts, reject wrong secrets and do not contain plaintext", async () => {

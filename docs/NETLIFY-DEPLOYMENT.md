@@ -1,5 +1,9 @@
 # Netlify deployment: PR #5
 
+Historical report for `d91d21c`: the SQLite guard and future-migration section below
+describe that revision only. The current PostgreSQL schema, conditional runtime
+guard, import and release procedure are documented in [POSTGRES-PRODUCTION.md](POSTGRES-PRODUCTION.md).
+
 ## Confirmed failure
 
 Commit `74c6dcf00b0ce9f27a730ffca70db742989eafc4` failed in the adapter packaging stage, after Next.js compilation. The [failed deploy](https://app.netlify.com/projects/endearing-liger-4144f2/deploys/6ac06f583c329800086835ea) reports:

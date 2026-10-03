@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
 import { sameOrigin, configuredAppOrigin } from "@/lib/app-origin";
-import { isNetlifyDeployment, DATABASE_DEPLOYMENT_MESSAGE } from "@/lib/deployment";
+import { databaseConfigured, DATABASE_DEPLOYMENT_MESSAGE } from "@/lib/deployment";
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if (
@@ -18,10 +18,7 @@ export async function proxy(request: NextRequest) {
       { error: "Запрос с другого сайта запрещён." },
       { status: 403 },
     );
-  // A successful preview build does not make build-time SQLite durable.
-  // Keep public account screens available; fail closed for database operations
-  // until an external provider is separately approved and implemented.
-  if (isNetlifyDeployment() && !["/", "/login", "/signup"].includes(path))
+  if (!databaseConfigured() && !["/", "/login", "/signup"].includes(path))
     return NextResponse.json(
       { error: DATABASE_DEPLOYMENT_MESSAGE },
       { status: 503, headers: { "Cache-Control": "no-store" } },

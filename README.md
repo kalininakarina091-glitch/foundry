@@ -1,7 +1,7 @@
 # Foundry
 
 Evidence-first workspace for discovering and validating business opportunities.
-Built with Next.js App Router, React, Tailwind CSS and Prisma 6 / SQLite.
+Built with Next.js App Router, React, Tailwind CSS and Prisma 6 / PostgreSQL.
 
 ## Run locally
 
@@ -9,19 +9,23 @@ Use Node.js 22.18+ (24 recommended).
 
 ```sh
 npm ci
+# Copy .env.example to .env.local and supply a real PostgreSQL DATABASE_URL.
 npm run db:setup
 npm run dev
 ```
 
-`db:setup` generates the Prisma client and applies the existing SQLite migrations;
+`db:setup` generates the Prisma client and applies the PostgreSQL baseline;
 it does not reset an existing database. Copy `.env.example` to `.env.local` and set
 `OPENROUTER_API_KEY` for AI operations. No key is needed to browse records, explore
 demo examples, or receive an insufficient-evidence result. Optionally seed source
 definitions with `node --experimental-strip-types prisma/seed.ts`.
 
-The default database is `prisma/dev.db`. `DATABASE_URL` can override it at runtime
-(use an absolute `file:` URL for isolated tests). Database files and credentials
-are ignored by Git. No records or secrets are included in the repository.
+`DATABASE_URL` is required for database-backed runtime. `DIRECT_URL` optionally
+supplies an unpooled migration/import connection; npm CLI commands fall back to
+`DATABASE_URL`. There is no SQLite runtime fallback. Existing SQLite files are
+preserved for read-only import, not opened by the application. See
+[PostgreSQL migration, QA and deployment instructions](docs/POSTGRES-PRODUCTION.md).
+Database files and credentials are ignored by Git.
 
 ## Product flow
 
@@ -72,7 +76,7 @@ Email/password authentication and database-backed sessions are implemented. Prof
 
 ## Accounts and personalization
 
-Netlify preview deployment notes and the exact adapter failure/fix are in [NETLIFY-DEPLOYMENT.md](docs/NETLIFY-DEPLOYMENT.md). This SQLite revision deploys public landing/login/signup screens there, while database-backed operations return 503 with a clear configuration message. It does not use build-time SQLite as a persistent production account store. Local runtime retains the full account/pipeline functionality.
+The earlier adapter failure/fix is recorded in [NETLIFY-DEPLOYMENT.md](docs/NETLIFY-DEPLOYMENT.md). This revision enables database-backed routes when a PostgreSQL URL is configured, including on Netlify. Missing or non-PostgreSQL configuration returns an explicit 503. No permanent external database has been provisioned: successful preview packaging alone does not verify production accounts. Follow [the release instructions](docs/POSTGRES-PRODUCTION.md) before enabling those routes.
 
 Register at `/signup`, complete the six-step onboarding, or skip with limited personalization. Edit all answers at `/settings/personalization`. `/opportunities?view=for-you` ranks the common catalog using a separate deterministic Match Score; `?view=all` keeps the common market ranking. Match Score never changes Opportunity Score, evidence or Validation Confidence.
 
@@ -84,7 +88,12 @@ See [accounts architecture and final QA](docs/ACCOUNTS-PERSONALIZATION-QA.md) fo
 
 See [the technical audit](docs/TECHNICAL-AUDIT-2026-09-27.md) and [recorded API checks](docs/audit/e2e-2026-09-27.json).
 
-For isolated production QA, migrate a **copy** of the database with a temporary Prisma schema pointing to that copy. DATABASE_URL overrides the application runtime, not the hardcoded default in the Prisma CLI schema. Set FOUNDRY_AUDIT_BUILD=1 for both build and start to use .next-audit without replacing .next. Apply the new additive migration before starting this version, and regenerate the local client with npm run db:setup for the default database.
+For isolated production QA, provision a disposable PostgreSQL database, run
+`npm run db:setup`, then read-only import a consistent SQLite snapshot with
+`npm run db:import -- --sqlite /private/snapshot.db --apply`. Set
+`FOUNDRY_IMPORT_CONFIRM=EMPTY_POSTGRES_TARGET` only after verifying the destination.
+Never point destructive QA at production. `FOUNDRY_AUDIT_BUILD=1` at both build and
+start uses `.next-audit` without replacing `.next`.
 
 The regression script deliberately clears/restores evidence on a selected audit-created opportunity. Run only on a disposable database with no concurrent writes:
 

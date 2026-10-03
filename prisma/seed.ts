@@ -39,7 +39,7 @@ async function main() {
   for (const source of sources) {
     await prisma.source.upsert({
       where: { id: source.name.toLowerCase().replace(/\s+/g, "-") },
-      update: source,
+      update: {},
       create: {
         id: source.name.toLowerCase().replace(/\s+/g, "-"),
         ...source,
@@ -51,5 +51,5 @@ async function main() {
 }
 
 main()
-  .catch(console.error)
+  .catch(() => { console.error("Source seed failed. Check database configuration."); process.exitCode = 1; })
   .finally(() => prisma.$disconnect());

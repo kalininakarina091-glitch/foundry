@@ -4,12 +4,10 @@ import { prisma } from "@/lib/db";
 import { newToken, tokenDigest } from "./auth-crypto";
 import { SESSION_COOKIE } from "./auth-constants";
 import { configuredAppOrigin } from "./app-origin";
-import { isNetlifyDeployment } from "./deployment";
+import { databaseConfigured } from "./deployment";
 export { SESSION_COOKIE } from "./auth-constants";
 export async function sessionUser(token?: string) {
-  // This version has only a local SQLite datasource. Never read it as a
-  // production account store in a serverless deployment.
-  if (isNetlifyDeployment()) return null;
+  if (!databaseConfigured()) return null;
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
   const session = await prisma.session.findUnique({
     where: { tokenHash: tokenDigest(token) },

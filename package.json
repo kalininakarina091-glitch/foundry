@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "netlify:build": "prisma generate && next build",
+    "netlify:build": "npm run db:generate && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "db:setup": "prisma generate && prisma migrate deploy"
+    "db:setup": "npm run db:generate && npm run db:migrate",
+    "db:generate": "node scripts/prisma-command.mjs generate",
+    "db:validate": "node scripts/prisma-command.mjs validate",
+    "db:migrate": "node scripts/prisma-command.mjs migrate deploy",
+    "db:import": "node scripts/import-sqlite-postgres.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.49",
