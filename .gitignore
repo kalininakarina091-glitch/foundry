@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+node_modules/
+dist/
+.env
+
+# Local data and generated assistant packages
+prisma/*.db
+prisma/*.db-*
+.agents/
+.claude/
+.cursor/
+.devin/
+!.env.example
+/generated/
+
+/.next-audit/

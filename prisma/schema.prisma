@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ─── Source ───────────────────────────────────────────
+
+model Source {
+  id            String    @id @default(cuid())
+  name          String
+  type          String    // hackernews | github | rss | reddit | producthunt
+  url           String?
+  status        String    @default("active") // active | disabled | error
+  lastSyncedAt  DateTime?
+  createdAt     DateTime  @default(now())
+
+  rawItems      RawItem[]
+}
+
+// ─── RawItem ──────────────────────────────────────────
+
+model RawItem {
+  id           String    @id @default(cuid())
+  sourceId     String
+  externalId   String?
+  title        String?
+  content      String?
+  url          String?
+  author       String?
+  publishedAt  DateTime?
+  fetchedAt    DateTime  @default(now())
+  extractionStatus String @default("pending")
+  extractedAt DateTime?
+  metadata     String?   // JSON string
+
+  source       Source    @relation(fields: [sourceId], references: [id])
+  signals      Signal[]
+  @@index([sourceId, externalId])
+}
+
+// ─── Signal ───────────────────────────────────────────
+
+model Signal {
+  id                  String    @id @default(cuid())
+  rawItemId           String
+  type                String
+  title               String?
+  description         String?
+  pain                String?
+  customer            String?
+  industry            String?
+  strength            Float     @default(0.5)
+  normalizedProblem   String?   // ← новое
+  normalizedCustomer  String?   // ← новое
+  embedding           String?   // ← новое (JSON string)
+  duplicateOf         String?   // ← новое (signal id)
+  createdAt           DateTime  @default(now())
+
+  rawItem             RawItem   @relation(fields: [rawItemId], references: [id])
+  evidence            Evidence[]
+}
+
+// ─── Evidence ─────────────────────────────────────────
+
+model Evidence {
+  id             String    @id @default(cuid())
+  opportunityId  String
+  signalId       String
+  claim          String?
+  evidenceType   String    // positive | negative | neutral
+  strength       Float     @default(0.5)
+  sourceUrl      String?
+  createdAt      DateTime  @default(now())
+
+  signal         Signal    @relation(fields: [signalId], references: [id])
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id])
+  @@index([opportunityId, signalId])
+}
+
+// ─── Opportunity ──────────────────────────────────────
+
+model Opportunity {
+  matchAttributes String?
+  savedBy SavedOpportunity[]
+  feedback OpportunityFeedback[]
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  industry     String?
+  score        Int       @default(0)
+  status       String    @default("new") // new | saved | validated | skipped
+  createdAt    DateTime  @default(now())
+
+  evidence     Evidence[]
+  generationKey String? @unique
+  provenance String?
+  research String?
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  name String
+  isAdmin Boolean @default(false)
+  createdAt DateTime @default(now())
+  profile UserProfile?
+  sessions Session[]
+  saved SavedOpportunity[]
+  feedback OpportunityFeedback[]
+}
+model UserProfile {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role String?
+  goals String @default("[]")
+  industries String @default("[]")
+  businessTypes String @default("[]")
+  budget String?
+  team String?
+  time String?
+  skills String @default("[]")
+  markets String @default("[]")
+  onboardingCompleted Boolean @default(false)
+  onboardingSkipped Boolean @default(false)
+  onboardingStep Int @default(0)
+  preferences String @default("{}")
+  about String @default("")
+  updatedAt DateTime @updatedAt
+}
+model Session {
+  tokenHash String @id
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+model SavedOpportunity {
+  userId String
+  opportunityId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([userId, opportunityId])
+}
+model OpportunityFeedback {
+  userId String
+  opportunityId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  kind String
+  createdAt DateTime @default(now())
+  @@id([userId, opportunityId])
+}
+model AuthThrottle {
+  key String @id
+  attempts Int @default(0)
+  expiresAt DateTime
+  @@index([expiresAt])
+}
