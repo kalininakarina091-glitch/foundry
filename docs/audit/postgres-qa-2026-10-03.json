@@ -1,0 +1,113 @@
+{
+  "ranAt": "2026-10-03T08:10:24.747Z",
+  "environment": "Disposable localhost PostgreSQL 18.3; no permanent provider",
+  "migration": {
+    "audited": {
+      "source": {
+        "Source": 8,
+        "RawItem": 191,
+        "Signal": 44,
+        "Opportunity": 7,
+        "Evidence": 83,
+        "User": 6,
+        "UserProfile": 6,
+        "Session": 8,
+        "SavedOpportunity": 3,
+        "OpportunityFeedback": 1,
+        "AuthThrottle": 9
+      },
+      "destination": {
+        "Source": 8,
+        "RawItem": 191,
+        "Signal": 44,
+        "Opportunity": 7,
+        "Evidence": 83,
+        "User": 6,
+        "UserProfile": 6,
+        "Session": 8,
+        "SavedOpportunity": 3,
+        "OpportunityFeedback": 1,
+        "AuthThrottle": 9
+      },
+      "contentVerified": true,
+      "traceable": 1,
+      "legacy": 6
+    },
+    "original": {
+      "source": {
+        "Source": 5,
+        "RawItem": 130,
+        "Signal": 21,
+        "Opportunity": 6,
+        "Evidence": 81,
+        "User": 0,
+        "UserProfile": 0,
+        "Session": 0,
+        "SavedOpportunity": 0,
+        "OpportunityFeedback": 0,
+        "AuthThrottle": 0
+      },
+      "destination": {
+        "Source": 5,
+        "RawItem": 130,
+        "Signal": 21,
+        "Opportunity": 6,
+        "Evidence": 81,
+        "User": 0,
+        "UserProfile": 0,
+        "Session": 0,
+        "SavedOpportunity": 0,
+        "OpportunityFeedback": 0,
+        "AuthThrottle": 0
+      },
+      "contentVerified": true,
+      "legacy": 6
+    },
+    "safety": {
+      "originalImportVerified": true,
+      "nonemptyTargetRefusedWithoutChanges": true,
+      "lateFailureRollsBackEveryTable": true,
+      "sqliteFilesUnchanged": true
+    }
+  },
+  "checks": {
+    "prismaValidate": "pass",
+    "prismaGenerate": "pass",
+    "unitTests": 25,
+    "lint": "pass",
+    "typecheck": "pass",
+    "productionBuild": "pass (Webpack; local node_modules junction prevents Turbopack)",
+    "accounts": 58,
+    "pipeline": 44,
+    "netlifyMetadataAccounts": 58,
+    "netlifyMetadataPipeline": 44,
+    "missingConfigPublicPages": 3,
+    "missingConfigRequests503": 5,
+    "processRestartPersistence": true,
+    "middlewareNativePrisma": false,
+    "security": {
+      "expiredSessionRejected": true,
+      "throttle429": true,
+      "storedHashesVerified": true,
+      "qaAdminRevoked": true
+    }
+  },
+  "scores": {
+    "opportunityScore": 42,
+    "matchA": 100,
+    "matchB": 0,
+    "matchCoverage": 20,
+    "validation": "RESEARCH MORE",
+    "patternId": "pattern-0621571b7974673ec3cb4bd4",
+    "signalIds": [
+      "cmuiq1rq9003yuwvo2bwhmrom",
+      "cmuiq4fw4004muwvoaelayf8x"
+    ]
+  },
+  "productionRuntimeVerified": false,
+  "limitations": [
+    "No permanent PostgreSQL credentials, hosted TLS/pooler, multi-function load or Netlify redeploy persistence verified",
+    "No fresh paid AI calls in this regression; insufficient-evidence validation and imported lineage verified",
+    "Six legacy opportunities remain legacy; sparse Match attributes and prior demo features unchanged"
+  ]
+}

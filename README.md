@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Foundry
 
-## Getting Started
+Evidence-first workspace for discovering and validating business opportunities.
+Built with Next.js App Router, React, Tailwind CSS and Prisma 6 / PostgreSQL.
 
-First, run the development server:
+## Run locally
 
-```bash
+Use Node.js 22.18+ (24 recommended).
+
+```sh
+npm ci
+# Copy .env.example to .env.local and supply a real PostgreSQL DATABASE_URL.
+npm run db:setup
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`db:setup` generates the Prisma client and applies the PostgreSQL baseline;
+it does not reset an existing database. Copy `.env.example` to `.env.local` and set
+`OPENROUTER_API_KEY` for AI operations. No key is needed to browse records, explore
+demo examples, or receive an insufficient-evidence result. Optionally seed source
+definitions with `node --experimental-strip-types prisma/seed.ts`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`DATABASE_URL` is required for database-backed runtime. `DIRECT_URL` optionally
+supplies an unpooled migration/import connection; npm CLI commands fall back to
+`DATABASE_URL`. There is no SQLite runtime fallback. Existing SQLite files are
+preserved for read-only import, not opened by the application. See
+[PostgreSQL migration, QA and deployment instructions](docs/POSTGRES-PRODUCTION.md).
+Database files and credentials are ignored by Git.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Product flow
 
-## Learn More
+- `/dashboard`: recent database opportunities and counts derived from their evidence.
+- `/opportunities`: the same records, with search, category filters and sorting.
+- `/opportunities/:id`: problem, customer, evidence provenance and research gaps.
+- `/validation/:id`: evidence-based recommendation and confidence, separate from Score.
+- `/settings`: provider configuration status and links to existing data preparation tools.
 
-To learn more about Next.js, take a look at the following resources:
+`?mode=demo` explicitly selects the fixtures in `lib/mock-data.ts` on the list,
+details and validation pages. Demo examples never silently replace failed database
+requests, create database records or call the validation provider. `/insights`
+redirects to `/opportunities`. Existing sources, signals, clusters, patterns and
+evidence routes are retained. Legacy reports, team, alerts, simulator and integration
+screens are marked as demonstrations and excluded from primary navigation.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Checks
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```sh
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
 
-## Deploy on Vercel
+For desktop environments that cannot spawn child processes, use the supported
+Next.js thread/API mode (PowerShell):
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```powershell
+$env:FOUNDRY_BUILD_THREADS = '1'
+node node_modules/next/dist/bin/next build --webpack
+node --experimental-strip-types --test --test-isolation=none tests/*.test.ts
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This mode still performs TypeScript checking. It does not ignore build errors.
+
+## Pipeline and evidence limits
+
+Source → RawItem → Signal → Normalize → Cluster → Pattern → Opportunity → Score → Evidence → Validation now retains exact member IDs and source quotes. Generate with POST /api/opportunities/generate and a patternId from /api/patterns. Old keyword-based clusterName generation and arbitrary /api/analyze input are no longer supported.
+
+Only signals with public non-placeholder URLs, exact source quotes and matching generation provenance contribute to an opportunity. Legacy hypotheses remain visible with a warning; their unsupported evidence and old stored scores are excluded. Score is a transparent evidence-support heuristic (material count, publication-host diversity, model-assigned signal strength), not market attractiveness, growth, revenue or success probability.
+
+Validation considers up to 40 materials and returns their snapshot. BUILD requires at least three distinct materials across two source records and two publication hosts in the positively cited subset, plus the model's verdict/confidence gate. These are conservative product guardrails, not statistical proof of independence or demand. Reports are not persisted beyond the open page.
+
+GitHub imports 15 recent open issues (optionally scoped to a repository); Hacker News imports 15 top story records, not linked articles or comment threads; RSS reads the configured feed. Source creation is currently available through POST /api/source. A legacy RSS source pointing to example.com must be replaced with a real feed configuration; it will now report an error instead of importing unrelated fixed feeds. Failed extractions can be retried through POST /api/signals/extract with rawItemId. Batch extraction handles pending records only.
+
+Email/password authentication and database-backed sessions are implemented. Profile, preferences, Saved and feedback belong to the signed-in user. Market records remain shared; pipeline mutations require an administrator. Scheduled jobs, notifications and remote integrations are not implemented. Source documents are untrusted and AI extraction/generation can still misjudge relevance or combine different problems. No automated rule establishes willingness to pay.
+
+## Accounts and personalization
+
+The earlier adapter failure/fix is recorded in [NETLIFY-DEPLOYMENT.md](docs/NETLIFY-DEPLOYMENT.md). This revision enables database-backed routes when a PostgreSQL URL is configured, including on Netlify. Missing or non-PostgreSQL configuration returns an explicit 503. No permanent external database has been provisioned: successful preview packaging alone does not verify production accounts. Follow [the release instructions](docs/POSTGRES-PRODUCTION.md) before enabling those routes.
+
+Register at `/signup`, complete the six-step onboarding, or skip with limited personalization. Edit all answers at `/settings/personalization`. `/opportunities?view=for-you` ranks the common catalog using a separate deterministic Match Score; `?view=all` keeps the common market ranking. Match Score never changes Opportunity Score, evidence or Validation Confidence.
+
+Apply migrations and regenerate Prisma before starting this version. Outside localhost, set the canonical `APP_ORIGIN` and serve through HTTPS. New accounts are ordinary users; administrator privileges must be assigned by a trusted database operator, never by registration or profile fields. Email verification, password reset, OAuth and MFA are not implemented. Do not use this MVP as a public production identity service without deployment/security review.
+
+See [accounts architecture and final QA](docs/ACCOUNTS-PERSONALIZATION-QA.md) for the schema, algorithm, checks and remaining limitations. Historical audit reports below describe their original revision.
+
+## Audit and repeatable QA
+
+See [the technical audit](docs/TECHNICAL-AUDIT-2026-09-27.md) and [recorded API checks](docs/audit/e2e-2026-09-27.json).
+
+For isolated production QA, provision a disposable PostgreSQL database, run
+`npm run db:setup`, then read-only import a consistent SQLite snapshot with
+`npm run db:import -- --sqlite /private/snapshot.db --apply`. Set
+`FOUNDRY_IMPORT_CONFIRM=EMPTY_POSTGRES_TARGET` only after verifying the destination.
+Never point destructive QA at production. `FOUNDRY_AUDIT_BUILD=1` at both build and
+start uses `.next-audit` without replacing `.next`.
+
+The regression script deliberately clears/restores evidence on a selected audit-created opportunity. Run only on a disposable database with no concurrent writes:
+
+```powershell
+$env:QA_BASE_URL='http://127.0.0.1:3109'
+$env:QA_OPPORTUNITY_ID='<ID generated on the audit copy>'
+$env:QA_ALLOW_MUTATIONS='1'
+$env:QA_SESSION_COOKIE='<session of a QA administrator on the disposable copy>'
+node scripts/qa-pipeline.mjs
+```
+
+It verifies lineage, normalization/generation/extraction idempotency, score reset/restoration, validation guards, invalid requests and page HTTP responses. Live ingestion and first-time AI generation/extraction require network access and provider credentials; their recorded outcomes are separate from deterministic unit tests.

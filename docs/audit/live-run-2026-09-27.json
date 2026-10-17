@@ -1,0 +1,394 @@
+{
+  "ingestion": {
+    "ranAt": "2026-09-26T18:25:40.280Z",
+    "results": [
+      {
+        "path": "/api/source/rss-feeds/sync",
+        "status": 502,
+        "data": {
+          "error": "Синхронизация не завершена. Проверьте URL, доступность и формат источника. Возможен частичный импорт; повторный запуск пропустит уже записанные материалы."
+        }
+      },
+      {
+        "path": "/api/source/reddit/sync",
+        "status": 409,
+        "data": {
+          "error": "Источник не активен"
+        }
+      },
+      {
+        "path": "/api/source/hacker-news/sync",
+        "status": 200,
+        "data": {
+          "imported": 15,
+          "skipped": 0,
+          "excluded": 0,
+          "total": 15,
+          "source": "Hacker News"
+        }
+      },
+      {
+        "path": "/api/source/hacker-news/sync",
+        "status": 200,
+        "data": {
+          "imported": 1,
+          "skipped": 14,
+          "excluded": 0,
+          "total": 15,
+          "source": "Hacker News"
+        }
+      },
+      {
+        "path": "/api/source",
+        "status": 201,
+        "data": {
+          "id": "cmuipzw7t000wuwvo30tcqcl8",
+          "name": "Audit: Codex issues",
+          "type": "github",
+          "url": "https://github.com/openai/codex",
+          "status": "active",
+          "lastSyncedAt": null,
+          "createdAt": "2026-09-26T18:25:36.474Z"
+        }
+      },
+      {
+        "path": "/api/source/cmuipzw7t000wuwvo30tcqcl8/sync",
+        "status": 200,
+        "data": {
+          "imported": 15,
+          "skipped": 0,
+          "excluded": 0,
+          "total": 15,
+          "source": "Audit: Codex issues"
+        }
+      },
+      {
+        "path": "/api/source/cmuipzw7t000wuwvo30tcqcl8/sync",
+        "status": 200,
+        "data": {
+          "imported": 0,
+          "skipped": 15,
+          "excluded": 0,
+          "total": 15,
+          "source": "Audit: Codex issues"
+        }
+      },
+      {
+        "path": "/api/source",
+        "status": 201,
+        "data": {
+          "id": "cmuipzxn3001ruwvok8k25036",
+          "name": "Audit: Claude Code issues",
+          "type": "github",
+          "url": "https://github.com/anthropics/claude-code",
+          "status": "active",
+          "lastSyncedAt": null,
+          "createdAt": "2026-09-26T18:25:38.319Z"
+        }
+      },
+      {
+        "path": "/api/source/cmuipzxn3001ruwvok8k25036/sync",
+        "status": 200,
+        "data": {
+          "imported": 15,
+          "skipped": 0,
+          "excluded": 0,
+          "total": 15,
+          "source": "Audit: Claude Code issues"
+        }
+      },
+      {
+        "path": "/api/source/cmuipzxn3001ruwvok8k25036/sync",
+        "status": 200,
+        "data": {
+          "imported": 0,
+          "skipped": 15,
+          "excluded": 0,
+          "total": 15,
+          "source": "Audit: Claude Code issues"
+        }
+      },
+      {
+        "path": "/api/source",
+        "status": 201,
+        "data": {
+          "id": "cmuipzyci002muwvo4s0vcdos",
+          "name": "Audit: TechCrunch RSS",
+          "type": "rss",
+          "url": "https://techcrunch.com/feed/",
+          "status": "active",
+          "lastSyncedAt": null,
+          "createdAt": "2026-09-26T18:25:39.235Z"
+        }
+      },
+      {
+        "path": "/api/source/cmuipzyci002muwvo4s0vcdos/sync",
+        "status": 200,
+        "data": {
+          "imported": 15,
+          "skipped": 0,
+          "excluded": 0,
+          "total": 15,
+          "source": "Audit: TechCrunch RSS"
+        }
+      },
+      {
+        "path": "/api/source/cmuipzyci002muwvo4s0vcdos/sync",
+        "status": 200,
+        "data": {
+          "imported": 0,
+          "skipped": 15,
+          "excluded": 0,
+          "total": 15,
+          "source": "Audit: TechCrunch RSS"
+        }
+      }
+    ]
+  },
+  "extraction": {
+    "ranAt": "2026-09-26T18:29:32.660Z",
+    "model": "meta-llama/llama-3.3-70b-instruct",
+    "results": [
+      {
+        "rawItemId": "cmuipzxcc000yuwvoug4fyhme",
+        "url": "https://github.com/openai/codex/issues/48503",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq0vxx003iuwvoyyk18pt5",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxci0010uwvolhair6yk",
+        "url": "https://github.com/openai/codex/issues/48501",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq10rx003kuwvo0kfxcy46",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxco0012uwvoraafq1b2",
+        "url": "https://github.com/openai/codex/issues/48500",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq16c2003muwvoibm3fzgq",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxcv0014uwvodcjny1ds",
+        "url": "https://github.com/openai/codex/issues/48499",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq1a7m003ouwvo9n03o9du",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxd00016uwvoke62g5xs",
+        "url": "https://github.com/openai/codex/issues/48498",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq1dm7003quwvos23immdr",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxd50018uwvonohfawxo",
+        "url": "https://github.com/openai/codex/issues/48497",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq1h3o003suwvok0gvq4ko",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxdi001auwvo5e63bti9",
+        "url": "https://github.com/openai/codex/issues/48496",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq1kjz003uuwvo86rfo7t2",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxdo001cuwvogqxiuk1j",
+        "url": "https://github.com/openai/codex/issues/48495",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq1ouk003wuwvo52bhij1l",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxdu001euwvokyzo3t84",
+        "url": "https://github.com/openai/codex/issues/48494",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq1rq9003yuwvo2bwhmrom",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxe0001guwvon3irk4np",
+        "url": "https://github.com/openai/codex/issues/48493",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq1uet0040uwvoqr9ijq0d",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxe6001iuwvo9qlld6ou",
+        "url": "https://github.com/openai/codex/issues/48492",
+        "status": 502,
+        "relevant": null,
+        "signalId": null,
+        "error": "Провайдер не вернул корректное извлечение с исходной цитатой"
+      },
+      {
+        "rawItemId": "cmuipzxec001kuwvomjgsgtfv",
+        "url": "https://github.com/openai/codex/issues/48490",
+        "status": 502,
+        "relevant": null,
+        "signalId": null,
+        "error": "Провайдер не вернул корректное извлечение с исходной цитатой"
+      },
+      {
+        "rawItemId": "cmuipzxej001muwvojarahyjp",
+        "url": "https://github.com/openai/codex/issues/48488",
+        "status": 502,
+        "relevant": null,
+        "signalId": null,
+        "error": "Провайдер не вернул корректное извлечение с исходной цитатой"
+      },
+      {
+        "rawItemId": "cmuipzxep001ouwvoqlegd1mj",
+        "url": "https://github.com/openai/codex/issues/48487",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq2ie10042uwvo8obqr2y9",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzxev001quwvofr12unih",
+        "url": "https://github.com/openai/codex/issues/48485",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq2vzr0044uwvoe8ralftj",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy33001tuwvo90biljfs",
+        "url": "https://github.com/anthropics/claude-code/issues/97497",
+        "status": 502,
+        "relevant": null,
+        "signalId": null,
+        "error": "Провайдер не вернул корректное извлечение с исходной цитатой"
+      },
+      {
+        "rawItemId": "cmuipzy3a001vuwvo7r94uh2s",
+        "url": "https://github.com/anthropics/claude-code/issues/97496",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq33e50046uwvoykn8jj11",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy3g001xuwvo3tnit9dm",
+        "url": "https://github.com/anthropics/claude-code/issues/97495",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq35a00048uwvo1n0nxv3g",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy3m001zuwvoowhmhyrd",
+        "url": "https://github.com/anthropics/claude-code/issues/97494",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq39ro004auwvo2a8id7zf",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy3s0021uwvo1l4rtbrg",
+        "url": "https://github.com/anthropics/claude-code/issues/97493",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq3eis004cuwvov97axozg",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy3x0023uwvobfplqb54",
+        "url": "https://github.com/anthropics/claude-code/issues/97492",
+        "status": 502,
+        "relevant": null,
+        "signalId": null,
+        "error": "Провайдер не вернул корректное извлечение с исходной цитатой"
+      },
+      {
+        "rawItemId": "cmuipzy420025uwvotaws9rzb",
+        "url": "https://github.com/anthropics/claude-code/issues/97491",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq3oyk004euwvo5m41k57e",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy490027uwvopf9uhubm",
+        "url": "https://github.com/anthropics/claude-code/issues/97490",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq3wla004guwvow7qhhwcq",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy4e0029uwvoawqkb8td",
+        "url": "https://github.com/anthropics/claude-code/issues/97489",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq3ycn004iuwvop7ujhgt6",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy4k002buwvoahvbhlhp",
+        "url": "https://github.com/anthropics/claude-code/issues/97488",
+        "status": 200,
+        "relevant": false,
+        "signalId": null,
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy4q002duwvo7ljcu59i",
+        "url": "https://github.com/anthropics/claude-code/issues/97487",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq42lu004kuwvoyjfg5mry",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy4w002fuwvoq8qo1gfy",
+        "url": "https://github.com/anthropics/claude-code/issues/97485",
+        "status": 502,
+        "relevant": null,
+        "signalId": null,
+        "error": "Провайдер не вернул корректное извлечение с исходной цитатой"
+      },
+      {
+        "rawItemId": "cmuipzy53002huwvow79resu3",
+        "url": "https://github.com/anthropics/claude-code/issues/97484",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq4fw4004muwvoaelayf8x",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy58002juwvo0h0tpm2d",
+        "url": "https://github.com/anthropics/claude-code/issues/97483",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq4lji004ouwvo7vldmyz1",
+        "error": null
+      },
+      {
+        "rawItemId": "cmuipzy5f002luwvo2mgw6e38",
+        "url": "https://github.com/anthropics/claude-code/issues/97482",
+        "status": 200,
+        "relevant": true,
+        "signalId": "cmuiq4ygd004quwvohl69ape1",
+        "error": null
+      }
+    ]
+  }
+}

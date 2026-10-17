@@ -1,0 +1,8 @@
+{
+  "passwordHash": true,
+  "hashedSessionOnly": true,
+  "expiredSessionRejected": true,
+  "authThrottled": true,
+  "integrity": "ok",
+  "foreignKeyViolations": 0
+}

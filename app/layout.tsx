@@ -1,35 +1,25 @@
-﻿import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/sidebar";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
+import { currentUser } from "@/lib/auth";
+import { PreferencesProvider } from "@/lib/use-preferences";
+import AppShell from "@/components/app-shell";
 export const metadata: Metadata = {
-  title: "Opportunity Scanner",
-  description: "Find what's worth building. Then build it.",
+  title: "Foundry — возможности на основе доказательств",
+  description:
+    "Найдите проблему, изучите рыночные сигналы и проверьте бизнес-возможность.",
 };
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await currentUser();
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <div className="flex min-h-screen bg-neutral-950">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto">{children}</main>
-        </div>
+    <html lang="ru" className="dark">
+      <body className="font-sans antialiased">
+        <PreferencesProvider key={user?.id || "guest"} user={user}>
+          <AppShell>{children}</AppShell>
+        </PreferencesProvider>
       </body>
     </html>
   );
