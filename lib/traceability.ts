@@ -1,4 +1,5 @@
 import { traceableUrl } from "./source-url.ts";
+import { quoteInSource } from "./source-text.ts";
 export { traceableUrl } from "./source-url.ts";
 import { createHash } from "node:crypto";
 export function normalizeText(value: string): string {
@@ -52,16 +53,10 @@ export interface PipelineSignal {
   };
 }
 export function isTraceableSignal(signal: PipelineSignal): boolean {
-  const quote = signal.description;
-  const original = [signal.rawItem.title, signal.rawItem.content]
-    .filter(Boolean)
-    .join("\n");
   return (
     !!traceableUrl(signal.rawItem.url) &&
     !signal.duplicateOf &&
-    !!quote &&
-    quote.trim().length >= 12 &&
-    original.includes(quote)
+    quoteInSource(signal.description, signal.rawItem)
   );
 }
 export function uniqueSignals<T extends PipelineSignal>(signals: T[]): T[] {

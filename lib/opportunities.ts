@@ -1,5 +1,6 @@
 import { readProvenance, signalsFromProvenance } from "@/lib/provenance";
 import { traceableUrl } from "@/lib/traceability";
+import { sourceDocument } from "@/lib/source-text";
 import { scoreSignals } from "@/lib/scoring";
 import { prisma } from "@/lib/db";
 import { mockOpportunities } from "@/lib/mock-data";
@@ -108,11 +109,10 @@ function databaseOpportunity(item: DatabaseOpportunity): OpportunityView {
       rawItemId: e.signal.rawItemId,
       url: traceableUrl(e.signal.rawItem.url),
       quote: e.signal.description,
-      sourceText: (
-        e.signal.rawItem.content ||
-        e.signal.rawItem.title ||
-        ""
-      ).slice(0, 4000),
+      sourceText: sourceDocument({
+        content: e.signal.rawItem.content || e.signal.rawItem.title,
+        source: e.signal.rawItem.source,
+      }).slice(0, 4000),
       date: (
         e.signal.rawItem.publishedAt || e.signal.rawItem.fetchedAt
       ).toISOString(),

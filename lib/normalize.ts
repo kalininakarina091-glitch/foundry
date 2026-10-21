@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/db";
 import { normalizeText, traceableUrl } from "@/lib/traceability";
+import { quoteInSource } from "@/lib/source-text";
 export async function normalizeAllSignals() {
   const signals = await prisma.signal.findMany({
-    include: { rawItem: true },
+    include: { rawItem: { include: { source: true } } },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
   });
   const canonical = new Map<string, string>();
@@ -11,13 +12,7 @@ export async function normalizeAllSignals() {
   for (const s of signals) {
     const problem = normalizeText(s.title || s.pain || s.description || "");
     const url = traceableUrl(s.rawItem.url);
-    const original = [s.rawItem.title, s.rawItem.content]
-      .filter(Boolean)
-      .join("\n");
-    const hasQuote =
-      !!s.description &&
-      s.description.trim().length >= 12 &&
-      original.includes(s.description);
+    const hasQuote = quoteInSource(s.description, s.rawItem);
     // The same problem in independent documents is corroboration, not a duplicate.
     const eligible = !!url && !!problem && hasQuote;
     const duplicateOf = eligible ? canonical.get(url) || null : null;

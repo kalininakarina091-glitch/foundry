@@ -1,6 +1,24 @@
 import { prisma } from "@/lib/db";
 import { extractSignals, AI_MODEL } from "@/lib/ai";
+import {
+  failureLabel,
+  failureOf,
+  MAX_EXTRACTION_ATTEMPTS,
+} from "@/lib/ai-errors";
 import { traceableUrl } from "@/lib/traceability";
+export { MAX_EXTRACTION_ATTEMPTS } from "@/lib/ai-errors";
+export function readMetadata(value: string | null): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(value || "{}");
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+      return parsed;
+  } catch {}
+  return {};
+}
+export function extractionAttempts(metadata: Record<string, unknown>): number {
+  const extraction = metadata.extraction as { attempts?: unknown } | undefined;
+  return typeof extraction?.attempts === "number" ? extraction.attempts : 0;
+}
 export async function extractRawItem(id: string) {
   const raw = await prisma.rawItem.findUnique({
     where: { id },
@@ -25,6 +43,13 @@ export async function extractRawItem(id: string) {
       skipped: true,
       signalId: existing?.id,
       reason: "Уже обработано",
+    };
+  const metadata = readMetadata(raw.metadata);
+  const attempts = extractionAttempts(metadata) + 1;
+  if (attempts > MAX_EXTRACTION_ATTEMPTS)
+    return {
+      status: 409,
+      error: `Исчерпан лимит попыток извлечения (${MAX_EXTRACTION_ATTEMPTS})`,
     };
   const lock = await prisma.rawItem.updateMany({
     where: {
@@ -61,12 +86,6 @@ export async function extractRawItem(id: string) {
             },
           })
         : null;
-      let metadata: Record<string, unknown> = {};
-      try {
-        const parsed = JSON.parse(raw.metadata || "{}");
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
-          metadata = parsed;
-      } catch {}
       await tx.rawItem.update({
         where: { id },
         data: {
@@ -78,6 +97,7 @@ export async function extractRawItem(id: string) {
               model: AI_MODEL,
               quote: result.evidence_quote,
               relevant: result.is_relevant,
+              attempts,
             },
           }),
         },
@@ -85,14 +105,31 @@ export async function extractRawItem(id: string) {
       return created;
     });
     return { status: 200, is_relevant: result.is_relevant, signal };
-  } catch {
+  } catch (e) {
+    const failure = failureOf(e);
+    // Reason codes only: no provider payload, source text or credentials.
+    console.error(
+      `[extraction] rawItem=${id} attempt=${attempts} reason=${failure.reason}${failure.httpStatus ? ` http=${failure.httpStatus}` : ""}`,
+    );
     await prisma.rawItem.update({
       where: { id },
-      data: { extractionStatus: "failed" },
+      data: {
+        extractionStatus: "failed",
+        metadata: JSON.stringify({
+          ...metadata,
+          extraction: {
+            model: AI_MODEL,
+            failedAt: new Date().toISOString(),
+            attempts,
+            ...failure,
+          },
+        }),
+      },
     });
     return {
       status: 502,
-      error: "Провайдер не вернул корректное извлечение с исходной цитатой",
+      reason: failure.reason,
+      error: `Извлечение не выполнено: ${failureLabel(failure.reason)}`,
     };
   }
 }

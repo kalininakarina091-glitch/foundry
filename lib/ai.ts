@@ -1,13 +1,15 @@
 import { z } from "zod";
 import type { ValidationEvidence } from "@/lib/validation";
+import { AIError } from "@/lib/ai-errors";
+import { quoteInSource, sourceDocument } from "@/lib/source-text";
 export const AI_MODEL =
   process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct";
 export async function generateJSON(prompt: string): Promise<unknown> {
   if (!process.env.OPENROUTER_API_KEY)
-    throw new Error("AI provider is not configured");
-  const response = await fetch(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
+    throw new AIError("provider_not_configured");
+  let response: Response;
+  try {
+    response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       signal: AbortSignal.timeout(55000),
       headers: {
@@ -27,19 +29,28 @@ export async function generateJSON(prompt: string): Promise<unknown> {
         ],
         response_format: { type: "json_object" },
       }),
-    },
-  );
-  if (!response.ok)
-    throw new Error(`AI provider returned HTTP ${response.status}`);
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (typeof content !== "string") throw new Error("Missing AI response");
-  return JSON.parse(
-    content
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```$/, "")
-      .trim(),
-  );
+    });
+  } catch (e) {
+    throw new AIError(
+      e instanceof Error && e.name === "TimeoutError"
+        ? "provider_timeout"
+        : "provider_unavailable",
+    );
+  }
+  if (!response.ok) throw new AIError("provider_http", response.status);
+  const data = await response.json().catch(() => null);
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== "string") throw new AIError("invalid_response");
+  try {
+    return JSON.parse(
+      content
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, "")
+        .trim(),
+    );
+  } catch {
+    throw new AIError("invalid_json");
+  }
 }
 export const extractionSchema = z.object({
   is_relevant: z.boolean(),
@@ -58,24 +69,26 @@ export async function extractSignals(rawItem: {
   content: string | null;
   sourceType: string;
 }) {
-  const input = `${rawItem.title || ""}\n${rawItem.content || ""}`.slice(
-    0,
-    16000,
-  );
-  const output = extractionSchema.parse(
+  const material = {
+    title: rawItem.title,
+    content: rawItem.content,
+    source: { type: rawItem.sourceType },
+  };
+  const input = sourceDocument(material).slice(0, 16000);
+  const parsed = extractionSchema.safeParse(
     await generateJSON(
       `Extract an explicitly stated business problem or unmet need. General news, a product launch, or a software bug alone does not prove unmet demand. Do not infer a customer, market gap or willingness to pay unless stated. Return JSON with is_relevant (boolean), problem, pain_point, customer, industry (strings or null), signal_type (pain|demand|trend|complaint|market_gap|regulatory or null), strength (0..1), evidence_quote (an EXACT verbatim substring from input, or null). If relevant, quote is required. Use the source language for the problem so similar documents can be grouped. Data: ${JSON.stringify({ sourceType: rawItem.sourceType, text: input })}`,
     ),
   );
+  if (!parsed.success) throw new AIError("invalid_schema");
+  const output = parsed.data;
   if (
     output.is_relevant &&
-    (!output.problem?.trim() ||
-      !output.signal_type ||
-      !output.evidence_quote ||
-      output.evidence_quote.trim().length < 12 ||
-      !input.includes(output.evidence_quote))
+    (!output.problem?.trim() || !output.signal_type)
   )
-    throw new Error("Extraction has no exact source quote");
+    throw new AIError("invalid_schema");
+  if (output.is_relevant && !quoteInSource(output.evidence_quote, material))
+    throw new AIError("quote_not_found");
   return output;
 }
 export async function validateOpportunity(input: {

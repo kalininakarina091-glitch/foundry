@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { failureLabel, MAX_EXTRACTION_ATTEMPTS } from "@/lib/ai-errors";
 export default function PipelineActions() {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
@@ -16,10 +17,17 @@ export default function PipelineActions() {
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Ошибка обработки");
+      const reasons = Object.entries(
+        (data.failures || {}) as Record<string, number>,
+      )
+        .map(([reason, count]) => `${failureLabel(reason)} — ${count}`)
+        .join("; ");
       setMessage(
         path.endsWith("normalize")
           ? `Обработано сигналов: ${data.total}. Нормализовано: ${data.normalized}; дубликатов: ${data.duplicates}; исключено: ${data.excluded}.`
-          : `Обработано материалов: ${data.processed}. Найдено сигналов: ${data.relevant}; пропущено: ${data.skipped}; ошибок: ${data.errors}.`,
+          : data.processed === 0
+            ? "Нет материалов для обработки."
+            : `Обработано материалов: ${data.processed}. Найдено сигналов: ${data.relevant}; пропущено: ${data.skipped}; ошибок: ${data.errors}.${reasons ? `\nПричины ошибок: ${reasons}.` : ""}`,
       );
       router.refresh();
     } catch (e) {
@@ -37,6 +45,15 @@ export default function PipelineActions() {
           onClick={() => run("/api/signals/extract-batch", { limit: 3 })}
         >
           Извлечь сигналы из 3 материалов
+        </button>
+        <button
+          className="button-secondary"
+          disabled={pending}
+          onClick={() =>
+            run("/api/signals/extract-batch", { limit: 3, retryFailed: true })
+          }
+        >
+          Повторить неудачные (до {MAX_EXTRACTION_ATTEMPTS} попыток)
         </button>
         <button
           className="button-secondary"
