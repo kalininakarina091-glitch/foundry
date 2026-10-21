@@ -13,16 +13,12 @@ import {
   type EvidenceView,
 } from "@/lib/opportunity-types";
 import { validationSchema, type ValidationReport } from "@/lib/validation";
+import { METRICS, recommendationLabel } from "@/lib/labels";
 
 const verdicts = {
   promising: "Перспективно",
   uncertain: "Нужны дополнительные данные",
   not_recommended: "Не рекомендуется",
-};
-const decisions = {
-  BUILD: "Развивать",
-  "RESEARCH MORE": "Исследовать дальше",
-  SKIP: "Отказаться",
 };
 export default function ValidationPanel({
   opportunity,
@@ -71,7 +67,7 @@ export default function ValidationPanel({
       </Link>
       <div className="mt-7">
         <PageHeader
-          eyebrow="Проверка / Validate"
+          eyebrow="Проверка"
           title={opportunity.title}
           description="Проверяем аргументы за и против на основе связанных материалов. Вывод помогает принять решение, но не гарантирует успех."
         />
@@ -141,13 +137,12 @@ export default function ValidationPanel({
                     <p
                       className={`mt-4 inline-flex rounded-md border px-3 py-1.5 text-sm font-medium ${report.recommendation === "BUILD" ? "border-emerald-400/25 text-emerald-300" : report.recommendation === "SKIP" ? "border-red-400/25 text-red-300" : "border-amber-400/25 text-amber-200"}`}
                     >
-                      {report.recommendation} ·{" "}
-                      {decisions[report.recommendation]}
+                      {recommendationLabel(report.recommendation)}
                     </p>
                   </div>
                   <div className="w-48">
                     <p className="text-sm text-muted-foreground">
-                      Validation Confidence
+                      {METRICS.validationConfidence}
                     </p>
                     <p className="my-2 text-3xl font-semibold tabular-nums">
                       {report.confidence}%

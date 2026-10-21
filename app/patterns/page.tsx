@@ -1,5 +1,6 @@
 import { detectPatterns } from "@/lib/patterns";
 import GenerateFromPattern from "@/components/generate-from-pattern";
+import { patternKindLabel } from "@/lib/labels";
 export const dynamic = "force-dynamic";
 export default async function PatternsPage() {
   const patterns = await detectPatterns();
@@ -27,11 +28,13 @@ export default async function PatternsPage() {
             <details className="text-xs">
               <summary>Цепочка происхождения</summary>
               <p className="break-all mt-2">
-                Cluster {p.clusterId} → Pattern {p.id}
+                Кластер {p.clusterId} → паттерн {p.id}
               </p>
-              <p className="break-all">Signals: {p.signalIds.join(", ")}</p>
-              <p className="break-all">RawItems: {p.rawItemIds.join(", ")}</p>
-              <p>Наблюдения: {p.patterns.join(", ")}</p>
+              <p className="break-all">Сигналы: {p.signalIds.join(", ")}</p>
+              <p className="break-all">
+                Материалы: {p.rawItemIds.join(", ")}
+              </p>
+              <p>Наблюдения: {p.patterns.map(patternKindLabel).join(", ")}</p>
             </details>
             <GenerateFromPattern patternId={p.id} />
           </article>

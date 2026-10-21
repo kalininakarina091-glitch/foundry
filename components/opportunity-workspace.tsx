@@ -16,13 +16,14 @@ import {
   safeSourceUrl,
   type OpportunityView,
 } from "@/lib/opportunity-types";
+import { METRICS } from "@/lib/labels";
 export function ScoreRing({ score }: { score: number }) {
   const value = Math.max(0, Math.min(100, score));
   return (
     <span
       className={`score-ring ${value >= 80 ? "high" : ""}`}
-      title="Opportunity Score — поддержка исходными материалами"
-      aria-label={`Score: ${score} из 100`}
+      title={`${METRICS.opportunityScore} — поддержка исходными материалами`}
+      aria-label={`${METRICS.opportunityScore}: ${score} из 100`}
     >
       <svg viewBox="0 0 40 40" aria-hidden="true">
         <circle className="score-track" cx="20" cy="20" r="17" />
@@ -147,7 +148,7 @@ export default function OpportunityWorkspace({
               value={sort}
               onChange={(e) => setSort(e.target.value)}
             >
-              <option value="score">По Score</option>
+              <option value="score">По оценке</option>
               <option value="evidence">По доказательствам</option>
               <option value="recent">Сначала новые</option>
             </select>
@@ -175,7 +176,7 @@ export default function OpportunityWorkspace({
                   <th>Возможность</th>
                   <th>Проблема</th>
                   <th>Категория</th>
-                  <th>Score</th>
+                  <th>Оценка</th>
                   <th>Доказательства</th>
                   <th>Статус</th>
                   <th>

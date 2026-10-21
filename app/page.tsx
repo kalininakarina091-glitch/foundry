@@ -29,7 +29,8 @@ export default async function Home() {
           Начать исследование →
         </Link>
         <p className="account-hint">
-          Match Score помогает выбирать. Доказательства помогают проверять.
+          Соответствие вам помогает выбирать. Доказательства помогают
+          проверять.
         </p>
         {!databaseConfigured() && <p role="status">{DATABASE_DEPLOYMENT_MESSAGE}</p>}
       </section>

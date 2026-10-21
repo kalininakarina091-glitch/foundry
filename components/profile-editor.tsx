@@ -155,7 +155,8 @@ export default function ProfileEditor({
       )}
       <h1>{settings ? "Ваш профиль возможностей" : steps[step]}</h1>
       <p>
-        Выбирайте то, что важно вам. Эти ответы влияют только на Match Score.
+        Выбирайте то, что важно вам. Эти ответы влияют только на
+        «Соответствие вам».
       </p>
       {settings
         ? sections.map((section, i) => (
@@ -208,7 +209,7 @@ export default function ProfileEditor({
       )}
       {settings && (
         <Link className="account-skip" href="/onboarding?restart=1">
-          Пройти onboarding заново →
+          Пройти анкету заново →
         </Link>
       )}
       <p className="account-hint">

@@ -30,9 +30,13 @@ export default async function ClustersPage() {
             <details className="mt-3 text-xs">
               <summary>Происхождение</summary>
               <p className="break-all">{c.id}</p>
-              <p className="break-all">Signals: {c.signalIds.join(", ")}</p>
-              <p className="break-all">RawItems: {c.rawItemIds.join(", ")}</p>
-              <p className="break-all">Sources: {c.sourceIds.join(", ")}</p>
+              <p className="break-all">Сигналы: {c.signalIds.join(", ")}</p>
+              <p className="break-all">
+                Материалы: {c.rawItemIds.join(", ")}
+              </p>
+              <p className="break-all">
+                Источники: {c.sourceIds.join(", ")}
+              </p>
             </details>
           </article>
         ))}

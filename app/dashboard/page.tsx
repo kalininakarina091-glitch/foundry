@@ -68,7 +68,7 @@ export default async function DashboardPage({
         <p className="mb-5 text-sm text-amber-200">
           В базе есть старые гипотезы без полной истории происхождения. Их
           названия не подтверждают спрос; исключённые доказательства не
-          учитываются в Score.
+          учитываются в оценке.
         </p>
       )}
       <div className="stats-grid">
@@ -86,7 +86,7 @@ export default async function DashboardPage({
       </div>
       <OpportunityWorkspace opportunities={opportunities} />
       <p className="dashboard-footnote">
-        Opportunity Score — эвристическая поддержка исходными материалами, не
+        Оценка возможности — эвристическая поддержка исходными материалами, не
         оценка размера рынка. Уверенность в выводе определяется отдельно при
         проверке.
       </p>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Layers3 } from "lucide-react";
 import { safeSourceUrl, type EvidenceView } from "@/lib/opportunity-types";
+import { METRICS, signalTypeLabel } from "@/lib/labels";
 
 export function PageHeader({
   eyebrow,
@@ -70,7 +71,9 @@ export function ScoreBadge({ score }: { score: number }) {
       className="shrink-0 text-right"
       title="Эвристическая оценка поддержки материалами, не вероятность успеха"
     >
-      <p className="text-xs text-muted-foreground">Opportunity Score</p>
+      <p className="text-xs text-muted-foreground">
+        {METRICS.opportunityScore}
+      </p>
       <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">
         {score}
         <span className="ml-1 text-sm font-normal text-muted-foreground">
@@ -106,7 +109,8 @@ export function EvidenceCard({ evidence }: { evidence: EvidenceView }) {
     <article className="rounded-xl border border-border p-5">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
         <span className={tones[evidence.type] || tones.neutral}>
-          {labels[evidence.type] || "Контекст"} · {evidence.signalType}
+          {labels[evidence.type] || "Контекст"} ·{" "}
+          {signalTypeLabel(evidence.signalType)}
         </span>
         <span className="text-muted-foreground">
           Сила сигнала{" "}
