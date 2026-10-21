@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DemoNotice,
   EmptyState,
@@ -14,21 +15,40 @@ import {
 } from "@/lib/opportunity-types";
 import { validationSchema, type ValidationReport } from "@/lib/validation";
 import { METRICS, recommendationLabel } from "@/lib/labels";
+import type {
+  StoredValidation,
+  ValidationSummary,
+} from "@/lib/validation-runs";
 
 const verdicts = {
   promising: "Перспективно",
   uncertain: "Нужны дополнительные данные",
   not_recommended: "Не рекомендуется",
 };
+const dateFormat = new Intl.DateTimeFormat("ru-RU", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 export default function ValidationPanel({
   opportunity,
+  stored = null,
+  history = [],
 }: {
   opportunity: OpportunityView;
+  stored?: StoredValidation | null;
+  history?: ValidationSummary[];
 }) {
-  const [report, setReport] = useState<ValidationReport | null>(null);
-  const [checkedEvidence, setCheckedEvidence] = useState<EvidenceView[] | null>(
-    null,
+  const router = useRouter();
+  const [report, setReport] = useState<ValidationReport | null>(
+    stored?.report ?? null,
   );
+  const [checkedEvidence, setCheckedEvidence] = useState<EvidenceView[] | null>(
+    stored?.evidenceSnapshot ?? null,
+  );
+  const [checkedAt, setCheckedAt] = useState<string | null>(
+    stored?.checkedAt ?? null,
+  );
+  const [runId, setRunId] = useState<string | null>(stored?.id ?? null);
   const materials = checkedEvidence ?? opportunity.evidence.slice(0, 40);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +67,13 @@ export default function ValidationPanel({
       if (!res.ok) throw new Error(data.error || "Проверка не завершена.");
       setReport(validationSchema.parse(data));
       setCheckedEvidence(data.evidenceSnapshot);
+      setCheckedAt(data.checkedAt ?? null);
+      setRunId(typeof data.runId === "string" ? data.runId : null);
+      // Saved runs get their own URL; reloading shows the updated history.
+      if (typeof data.runId === "string")
+        router.replace(
+          `/validation/${encodeURIComponent(opportunity.id)}?run=${encodeURIComponent(data.runId)}`,
+        );
     } catch (e) {
       setError(
         e instanceof Error && e.name !== "ZodError"
@@ -191,15 +218,44 @@ export default function ValidationPanel({
                 />
               </section>
               <div className="flex flex-wrap items-center gap-4">
-                <button className="button-secondary" onClick={validate}>
-                  Проверить повторно
+                <button
+                  className="button-secondary"
+                  disabled={pending}
+                  onClick={validate}
+                >
+                  {pending ? "Проверка выполняется…" : "Проверить повторно"}
                 </button>
                 <p className="text-xs text-muted-foreground">
-                  Результат не сохраняется после закрытия или обновления
-                  страницы.
+                  {runId && checkedAt
+                    ? `Сохранённая проверка от ${dateFormat.format(new Date(checkedAt))}. Показаны материалы на момент проверки.`
+                    : "Недостаточно данных для AI-проверки: этот результат вычисляется заново и в историю не сохраняется."}
                 </p>
               </div>
             </div>
+          )}
+          {history.length > 0 && (
+            <section className="mt-10">
+              <h2 className="mb-4 text-lg font-semibold">История проверок</h2>
+              <ul className="space-y-2 text-sm">
+                {history.map((h) => (
+                  <li key={h.id}>
+                    <Link
+                      href={`/validation/${encodeURIComponent(opportunity.id)}?run=${encodeURIComponent(h.id)}`}
+                      aria-current={h.id === runId ? "true" : undefined}
+                      className={`flex flex-wrap gap-x-4 gap-y-1 rounded-lg border px-4 py-3 ${h.id === runId ? "border-primary/50" : "border-border hover:border-primary/30"}`}
+                    >
+                      <span className="text-muted-foreground">
+                        {dateFormat.format(new Date(h.checkedAt))}
+                      </span>
+                      <span>{recommendationLabel(h.recommendation)}</span>
+                      <span className="text-muted-foreground">
+                        {METRICS.validationConfidence}: {h.confidence}%
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
           {materials.length > 0 && (
             <section className="mt-10">

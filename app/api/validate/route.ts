@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getOpportunity } from "@/lib/opportunities";
-import { validateOpportunity } from "@/lib/ai";
+import { validateOpportunity, AI_MODEL } from "@/lib/ai";
+import { saveValidationRun } from "@/lib/validation-runs";
 import {
   evidenceStats,
   hasEnoughEvidence,
@@ -79,12 +80,22 @@ export async function POST(request: Request) {
       evidence,
     });
     const report = checkValidationReport(result, evidence);
+    const run = await saveValidationRun({
+      opportunityId: opportunity.id,
+      userId: user.id,
+      model: AI_MODEL,
+      report,
+      evidenceSnapshot: evidence,
+      evidenceStats: stats,
+      availableEvidence: opportunity.evidence.length,
+    });
     return NextResponse.json({
       ...report,
+      runId: run.id,
       evidenceStats: stats,
       availableEvidence: opportunity.evidence.length,
       evidenceSnapshot: evidence,
-      checkedAt: new Date().toISOString(),
+      checkedAt: run.createdAt.toISOString(),
     });
   } catch {
     return NextResponse.json(

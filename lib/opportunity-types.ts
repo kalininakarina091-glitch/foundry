@@ -18,6 +18,12 @@ export interface EvidenceView {
 export interface OpportunityView {
   origin?: { patternId: string; clusterId: string; signalIds: string[] };
   excludedEvidence?: number;
+  /** Latest saved model-backed validation, if any. */
+  validation?: {
+    confidence: number;
+    recommendation: string;
+    checkedAt: string;
+  } | null;
   id: string;
   title: string;
   description: string | null;
