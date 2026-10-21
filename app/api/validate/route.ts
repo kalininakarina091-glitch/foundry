@@ -8,6 +8,10 @@ import {
   insufficientReport,
   checkValidationReport,
 } from "@/lib/validation";
+import { currentUser } from "@/lib/auth";
+import { limitKey } from "@/lib/client-ip";
+import { consumeLimits } from "@/lib/rate-limit";
+const VALIDATIONS_PER_HOUR = 10;
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -49,6 +53,25 @@ export async function POST(request: Request) {
             "AI-проверка не настроена. Добавьте ключ OpenRouter в окружение сервера.",
         },
         { status: 503 },
+      );
+    // Each call reaching the provider is paid; bound it per signed-in user.
+    const user = await currentUser();
+    if (!user)
+      return NextResponse.json({ error: "Войдите в аккаунт." }, { status: 401 });
+    if (
+      !(await consumeLimits([
+        {
+          key: limitKey("validate-user", user.id),
+          max: VALIDATIONS_PER_HOUR,
+          windowMs: 60 * 60000,
+        },
+      ]))
+    )
+      return NextResponse.json(
+        {
+          error: `Лимит AI-проверок: ${VALIDATIONS_PER_HOUR} в час. Повторите позже.`,
+        },
+        { status: 429 },
       );
     const result = await validateOpportunity({
       problem: opportunity.problem || opportunity.title,

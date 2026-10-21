@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       { error: "Некорректные данные входа." },
       { status: 400 },
     );
-  if (!(await allowAuthAttempt(parsed.data.email)))
+  if (!(await allowAuthAttempt(request, parsed.data.email, "login")))
     return NextResponse.json(
       { error: "Слишком много попыток. Повторите через 15 минут." },
       { status: 429 },

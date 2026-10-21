@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   const { name, email, password } = parsed.data;
-  if (!(await allowAuthAttempt(email)))
+  if (!(await allowAuthAttempt(request, email, "register")))
     return NextResponse.json(
       { error: "Слишком много попыток. Повторите через 15 минут." },
       { status: 429 },
