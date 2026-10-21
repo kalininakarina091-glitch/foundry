@@ -33,7 +33,20 @@ export async function POST(request: Request) {
       { error: "Для GitHub укажите github.com или URL репозитория" },
       { status: 400 },
     );
-  return NextResponse.json(await prisma.source.create({ data: body.data }), {
-    status: 201,
-  });
+  const url = traceableUrl(body.data.url)!;
+  if (
+    await prisma.source.findFirst({
+      // Older rows may hold the URL exactly as typed, before normalization.
+      where: { type: body.data.type, url: { in: [url, body.data.url] } },
+      select: { id: true },
+    })
+  )
+    return NextResponse.json(
+      { error: "Такой источник уже добавлен" },
+      { status: 409 },
+    );
+  return NextResponse.json(
+    await prisma.source.create({ data: { ...body.data, url } }),
+    { status: 201 },
+  );
 }
