@@ -2,7 +2,16 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { traceableUrl } from "@/lib/traceability";
 import PipelineActions from "@/components/pipeline-actions";
+import { sourceDocument } from "@/lib/source-text";
+import { failureLabel, MAX_EXTRACTION_ATTEMPTS } from "@/lib/ai-errors";
+import { extractionAttempts, readMetadata } from "@/lib/extraction";
 export const dynamic = "force-dynamic";
+function failureNote(value: string | null) {
+  const metadata = readMetadata(value);
+  const extraction = metadata.extraction as { reason?: unknown } | undefined;
+  const attempts = extractionAttempts(metadata);
+  return `Ошибка извлечения: ${failureLabel(extraction?.reason)}. Попыток: ${attempts} из ${MAX_EXTRACTION_ATTEMPTS}.`;
+}
 export default async function SignalsPage() {
   const raws = await prisma.rawItem.findMany({
     include: { source: true, signals: true },
@@ -28,6 +37,11 @@ export default async function SignalsPage() {
               {r.source.name} · {r.extractionStatus} · {r.signals.length}{" "}
               сигналов
             </p>
+            {r.extractionStatus === "failed" && (
+              <p className="text-amber-300 text-sm">
+                {failureNote(r.metadata)}
+              </p>
+            )}
             {traceableUrl(r.url) ? (
               <a
                 href={traceableUrl(r.url)!}
@@ -48,8 +62,9 @@ export default async function SignalsPage() {
                 Source {r.sourceId} → RawItem {r.id}
               </p>
               <p className="whitespace-pre-wrap">
-                {r.content ||
-                  "Исходный текст отсутствует; доступен только заголовок."}
+                {r.content
+                  ? sourceDocument({ content: r.content, source: r.source })
+                  : "Исходный текст отсутствует; доступен только заголовок."}
               </p>
               {r.signals.map((s) => (
                 <div className="mt-4 border-t pt-3" key={s.id}>
