@@ -74,7 +74,9 @@ export default async function SignalsPage() {
                   </p>
                   <p>{s.title}</p>
                   <p>Цитата: {s.description}</p>
-                  <p>Нормализация: {s.normalizedProblem || "Нет"}</p>
+                  <p>
+                    Ключ группировки (англ.): {s.normalizedProblem || "Нет"}
+                  </p>
                   <p>Дубликат: {s.duplicateOf || "Нет"}</p>
                 </div>
               ))}
