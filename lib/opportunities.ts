@@ -6,8 +6,17 @@ import { prisma } from "@/lib/db";
 import { mockOpportunities } from "@/lib/mock-data";
 import type { OpportunityView } from "@/lib/opportunity-types";
 
-const evidenceInclude = {
-  signal: { include: { rawItem: { include: { source: true } } } },
+const opportunityInclude = {
+  evidence: {
+    include: {
+      signal: { include: { rawItem: { include: { source: true } } } },
+    },
+  },
+  validations: {
+    orderBy: { createdAt: "desc" },
+    take: 1,
+    select: { confidence: true, recommendation: true, createdAt: true },
+  },
 } as const;
 function demoOpportunity(
   item: (typeof mockOpportunities)[number],
@@ -35,7 +44,7 @@ function demoOpportunity(
 function findDatabaseOpportunity(id: string) {
   return prisma.opportunity.findUnique({
     where: { id },
-    include: { evidence: { include: evidenceInclude } },
+    include: opportunityInclude,
   });
 }
 type DatabaseOpportunity = NonNullable<
@@ -96,6 +105,13 @@ function databaseOpportunity(item: DatabaseOpportunity): OpportunityView {
     mvp: null,
     origin,
     excludedEvidence: item.evidence.length - evidence.length,
+    validation: item.validations[0]
+      ? {
+          confidence: item.validations[0].confidence,
+          recommendation: item.validations[0].recommendation,
+          checkedAt: item.validations[0].createdAt.toISOString(),
+        }
+      : null,
     evidence: evidence.map((e) => ({
       id: e.id,
       claim: e.claim,
@@ -126,7 +142,7 @@ export async function listOpportunities(
   if (demo) return mockOpportunities.map(demoOpportunity);
   const items = await prisma.opportunity.findMany({
     orderBy: { createdAt: "desc" },
-    include: { evidence: { include: evidenceInclude } },
+    include: opportunityInclude,
   });
   return items.map(databaseOpportunity);
 }

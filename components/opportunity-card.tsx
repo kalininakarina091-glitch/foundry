@@ -10,7 +10,7 @@ import {
 import { StatusBadge } from "@/components/product-ui";
 import { ScoreRing } from "@/components/opportunity-workspace";
 import { opportunityHref, type OpportunityView } from "@/lib/opportunity-types";
-import { METRICS } from "@/lib/labels";
+import { METRICS, recommendationLabel } from "@/lib/labels";
 export default function OpportunityCard({
   opportunity,
   saved,
@@ -72,8 +72,18 @@ export default function OpportunityCard({
                 <small>доказательств</small>
               </span>
               <CircleHelp size={20} />
-              <span>
-                <strong>—</strong>
+              <span
+                title={
+                  opportunity.validation
+                    ? `${METRICS.validationConfidence}: ${recommendationLabel(opportunity.validation.recommendation)}`
+                    : "Проверка ещё не проводилась"
+                }
+              >
+                <strong>
+                  {opportunity.validation
+                    ? `${opportunity.validation.confidence}%`
+                    : "—"}
+                </strong>
                 <small>уверенность</small>
               </span>
             </div>

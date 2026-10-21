@@ -99,6 +99,7 @@ model Opportunity {
   createdAt    DateTime  @default(now())
 
   evidence     Evidence[]
+  validations  ValidationRun[]
   generationKey String? @unique
   provenance String?
   research String?
@@ -115,6 +116,27 @@ model User {
   sessions Session[]
   saved SavedOpportunity[]
   feedback OpportunityFeedback[]
+  validations ValidationRun[]
+}
+// One model-backed validation of an opportunity. The report and the exact
+// evidence it saw are stored as JSON, so later evidence changes do not
+// rewrite history. Market data: shared by all users, not personalised.
+model ValidationRun {
+  id String @id @default(cuid())
+  opportunityId String
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  model String
+  verdict String
+  recommendation String
+  confidence Int
+  report String
+  evidenceSnapshot String
+  evidenceStats String
+  availableEvidence Int
+  createdAt DateTime @default(now())
+  @@index([opportunityId, createdAt])
 }
 model UserProfile {
   userId String @id
