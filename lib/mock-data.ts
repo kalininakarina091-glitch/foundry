@@ -56,7 +56,7 @@ export const mockOpportunities = [
       "Инди-основателям нужны инсайты клиентов без отдельной research-команды.",
     problem: "Продукты запускают без разговоров с клиентами.",
     customer: "Indie-хакеры и основатели micro-SaaS",
-    whyNow: "AI сделал дешёвый customer research реалистичным.",
+    whyNow: "AI сделал дешёвое исследование клиентов реалистичным.",
     mvp: "Сбор сигналов → извлечение болей → скрипт интервью.",
     risks: ["Качество данных", "Ограничения API"],
     recommendation: "BUILD",
@@ -113,11 +113,7 @@ export const mockOpportunities = [
 
 export const industries = ["Все", "SaaS", "AI", "Финтех", "Здравоохранение"];
 
-export const recommendationLabels: Record<string, string> = {
-  BUILD: "Строить",
-  SKIP: "Не рекомендуется",
-  "RESEARCH MORE": "Исследовать",
-};
+export { RECOMMENDATIONS as recommendationLabels } from "./labels";
 
 export const kpis = [
   {

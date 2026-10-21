@@ -10,6 +10,7 @@ import {
 import { StatusBadge } from "@/components/product-ui";
 import { ScoreRing } from "@/components/opportunity-workspace";
 import { opportunityHref, type OpportunityView } from "@/lib/opportunity-types";
+import { METRICS } from "@/lib/labels";
 export default function OpportunityCard({
   opportunity,
   saved,
@@ -81,7 +82,8 @@ export default function OpportunityCard({
         {match && (
           <section className="match-panel">
             <strong>
-              Match Score: {match.score === null ? "—" : `${match.score}/100`}
+              {METRICS.matchScore}:{" "}
+              {match.score === null ? "—" : `${match.score}/100`}
             </strong>
             <small>
               Известно факторов: {match.coverage}% веса ·{" "}

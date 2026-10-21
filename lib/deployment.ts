@@ -12,4 +12,4 @@ export function databaseConfigured() {
 }
 
 export const DATABASE_DEPLOYMENT_MESSAGE =
-  "Постоянная PostgreSQL БД не настроена. Задайте DATABASE_URL в runtime environment и примените PostgreSQL migrations.";
+  "Постоянная база данных PostgreSQL не настроена. Задайте DATABASE_URL в переменных окружения сервера и примените миграции PostgreSQL.";

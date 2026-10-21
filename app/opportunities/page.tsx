@@ -14,7 +14,7 @@ export default async function OpportunitiesPage({
   return (
     <div className="page-container">
       <PageHeader
-        eyebrow="Возможности / Discover"
+        eyebrow="Поиск"
         title="Возможности"
         description="Реальные проблемы рынка. Исследования на основе данных."
       >

@@ -75,8 +75,8 @@ export default async function OpportunityDetailPage({
           Проверить возможность →
         </Link>
         <p className="text-xs leading-5 text-muted-foreground">
-          Score — предварительная оценка. Confidence появится в результате
-          проверки.
+          Оценка возможности — предварительная. Уверенность проверки появится
+          в результате проверки.
         </p>
       </div>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -144,7 +144,7 @@ export default async function OpportunityDetailPage({
           {opportunity.mvp && (
             <details className="text-sm">
               <summary className="cursor-pointer font-medium">
-                Гипотеза MVP
+                Гипотеза первой версии продукта (MVP)
               </summary>
               <p className="mt-3 leading-6 text-muted-foreground">
                 {opportunity.mvp}

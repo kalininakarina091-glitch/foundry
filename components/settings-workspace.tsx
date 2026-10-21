@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { usePreferences, savePreferences } from "@/lib/use-preferences";
 import type { Preferences } from "@/lib/preferences";
+import { sourceTypeLabel } from "@/lib/labels";
 type Source = {
   id: string;
   name: string;
@@ -191,7 +192,7 @@ export default function SettingsWorkspace({
             <div className="theme-caption">
               <span>
                 <span className="theme-swatch" />
-                Foundry Dark
+                Тёмная тема
               </span>
               <span className="settings-success">
                 <Check size={15} />
@@ -404,7 +405,7 @@ function PreferencesPanel({
               })
             }
           >
-            <option value="score">По Score</option>
+            <option value="score">По оценке</option>
             <option value="evidence">По доказательствам</option>
             <option value="recent">Сначала новые</option>
           </select>
@@ -569,7 +570,8 @@ function Sources({ sources }: { sources: Source[] }) {
                 <div>
                   <h3>{s.name}</h3>
                   <p>
-                    {s.type} · {s.count.toLocaleString("ru-RU")} материалов
+                    {sourceTypeLabel(s.type)} ·{" "}
+                    {s.count.toLocaleString("ru-RU")} материалов
                   </p>
                 </div>
                 <span

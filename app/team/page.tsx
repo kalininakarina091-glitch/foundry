@@ -7,7 +7,7 @@ export default function TeamPage() {
       <DemoNotice />
       <h1 className="text-3xl font-semibold text-white">Команда</h1>
       <p className="mt-2 text-neutral-400">
-        Общее пространство и Company Brain для всей AI-команды.
+        Общее пространство и база знаний компании для всей AI-команды.
       </p>
 
       <div className="mt-8 space-y-3">

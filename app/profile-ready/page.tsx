@@ -16,8 +16,9 @@ export default async function Ready() {
           по вашему профилю.
         </p>
         <p>
-          Match Score показывает соответствие. Opportunity Score и Validation
-          оцениваются независимо.
+          «Соответствие вам» показывает, насколько возможность подходит
+          лично вам. Оценка возможности и проверка считаются независимо от
+          профиля.
         </p>
         <Link className="button-primary" href="/opportunities?view=for-you">
           Перейти к возможностям →

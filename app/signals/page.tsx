@@ -5,6 +5,7 @@ import PipelineActions from "@/components/pipeline-actions";
 import { sourceDocument } from "@/lib/source-text";
 import { failureLabel, MAX_EXTRACTION_ATTEMPTS } from "@/lib/ai-errors";
 import { extractionAttempts, readMetadata } from "@/lib/extraction";
+import { extractionStatusLabel, signalTypeLabel } from "@/lib/labels";
 export const dynamic = "force-dynamic";
 function failureNote(value: string | null) {
   const metadata = readMetadata(value);
@@ -34,8 +35,8 @@ export default async function SignalsPage() {
           <article key={r.id} className="foundry-card rounded-xl p-5">
             <h2>{r.title}</h2>
             <p className="my-2 text-xs text-muted-foreground">
-              {r.source.name} · {r.extractionStatus} · {r.signals.length}{" "}
-              сигналов
+              {r.source.name} · {extractionStatusLabel(r.extractionStatus)} ·
+              сигналов: {r.signals.length}
             </p>
             {r.extractionStatus === "failed" && (
               <p className="text-amber-300 text-sm">
@@ -53,13 +54,13 @@ export default async function SignalsPage() {
               </a>
             ) : (
               <p className="text-amber-300 text-sm">
-                Нет пригодной публичной ссылки: материал исключён из pipeline.
+                Нет пригодной публичной ссылки: материал исключён из анализа.
               </p>
             )}
             <details className="mt-3 text-xs">
               <summary>Происхождение и исходный текст</summary>
               <p className="my-2 break-all">
-                Source {r.sourceId} → RawItem {r.id}
+                Источник {r.sourceId} → материал {r.id}
               </p>
               <p className="whitespace-pre-wrap">
                 {r.content
@@ -68,7 +69,9 @@ export default async function SignalsPage() {
               </p>
               {r.signals.map((s) => (
                 <div className="mt-4 border-t pt-3" key={s.id}>
-                  <p>Signal {s.id}</p>
+                  <p>
+                    Сигнал {s.id} · {signalTypeLabel(s.type)}
+                  </p>
                   <p>{s.title}</p>
                   <p>Цитата: {s.description}</p>
                   <p>Нормализация: {s.normalizedProblem || "Нет"}</p>

@@ -7,6 +7,7 @@ import OpportunityCard from "@/components/opportunity-card";
 import { usePreferences } from "@/lib/use-preferences";
 import { EmptyState } from "@/components/product-ui";
 import type { OpportunityView } from "@/lib/opportunity-types";
+import { METRICS } from "@/lib/labels";
 export default function OpportunityCatalog({
   opportunities,
   initialQuery = "",
@@ -162,7 +163,7 @@ export default function OpportunityCatalog({
   function exportReport() {
     const report = {
       exportedAt: new Date().toISOString(),
-      note: "Score is not validation confidence. Validation reports are not persisted.",
+      note: "Оценка возможности не равна уверенности проверки. Отчёты проверки не сохраняются.",
       opportunities: filtered,
     };
     const url = URL.createObjectURL(
@@ -197,7 +198,8 @@ export default function OpportunityCatalog({
       {tab === "for-you" && (
         <div className="personal-notice">
           <strong>
-            Match Score ≠ Opportunity Score ≠ Validation Confidence
+            {METRICS.matchScore} ≠ {METRICS.opportunityScore} ≠{" "}
+            {METRICS.validationConfidence}
           </strong>
           <p>
             {!personal
@@ -234,7 +236,7 @@ export default function OpportunityCatalog({
             value={score}
             onChange={(e) => setScore(e.target.value)}
           >
-            <option value="">Любой Score</option>
+            <option value="">Любая оценка</option>
             <option value="80">80 и выше</option>
             <option value="below">Ниже 80</option>
           </select>
@@ -255,8 +257,10 @@ export default function OpportunityCatalog({
             value={sort}
             onChange={(e) => setSort(e.target.value)}
           >
-            {tab === "for-you" && <option value="match">По Match Score</option>}
-            <option value="score">По Opportunity Score</option>
+            {tab === "for-you" && (
+              <option value="match">По соответствию вам</option>
+            )}
+            <option value="score">По оценке возможности</option>
             <option value="evidence">По доказательствам</option>
             <option value="recent">Сначала новые</option>
           </select>
