@@ -5,6 +5,8 @@ import { newToken, tokenDigest } from "./auth-crypto";
 import { SESSION_COOKIE } from "./auth-constants";
 import { configuredAppOrigin } from "./app-origin";
 import { databaseConfigured } from "./deployment";
+import { clientIp, limitKey } from "./client-ip";
+import { consumeLimits } from "./rate-limit";
 export { SESSION_COOKIE } from "./auth-constants";
 export async function sessionUser(token?: string) {
   if (!databaseConfigured()) return null;
@@ -58,23 +60,24 @@ export async function endSession() {
     });
   jar.delete(SESSION_COOKIE);
 }
-export async function allowAuthAttempt(email: string) {
-  const now = new Date(),
-    expiresAt = new Date(Date.now() + 15 * 60000);
-  for (const [key, max] of [
-    ["auth-global", 60],
-    [`auth-${tokenDigest(email)}`, 10],
-  ] as const) {
-    await prisma.authThrottle.updateMany({
-      where: { key, expiresAt: { lte: now } },
-      data: { attempts: 0, expiresAt },
-    });
-    const entry = await prisma.authThrottle.upsert({
-      where: { key },
-      create: { key, attempts: 1, expiresAt },
-      update: { attempts: { increment: 1 } },
-    });
-    if (entry.attempts > max) return false;
-  }
-  return true;
+const MINUTE = 60000;
+// Per address and per account, never site-wide: one client must not be able
+// to lock everyone else out of sign-in.
+export function allowAuthAttempt(
+  request: Request,
+  email: string,
+  kind: "login" | "register",
+) {
+  const ip = clientIp(request);
+  return consumeLimits(
+    kind === "login"
+      ? [
+          { key: limitKey("login-ip", ip), max: 30, windowMs: 15 * MINUTE },
+          { key: limitKey("login-email", email), max: 10, windowMs: 15 * MINUTE },
+        ]
+      : [
+          { key: limitKey("register-ip", ip), max: 5, windowMs: 60 * MINUTE },
+          { key: limitKey("register-email", email), max: 10, windowMs: 15 * MINUTE },
+        ],
+  );
 }
