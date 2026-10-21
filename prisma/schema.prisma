@@ -57,6 +57,7 @@ model Signal {
   industry            String?
   strength            Float     @default(0.5)
   normalizedProblem   String?   // ← новое
+  groupingKey         String?   // short English problem phrase used only for clustering
   normalizedCustomer  String?   // ← новое
   embedding           String?   // ← новое (JSON string)
   duplicateOf         String?   // ← новое (signal id)

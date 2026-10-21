@@ -55,6 +55,7 @@ export async function generateJSON(prompt: string): Promise<unknown> {
 export const extractionSchema = z.object({
   is_relevant: z.boolean(),
   problem: z.string().max(1000).nullable(),
+  problem_en: z.string().max(200).nullable().optional(),
   pain_point: z.string().max(1500).nullable(),
   customer: z.string().max(500).nullable(),
   industry: z.string().max(100).nullable(),
@@ -77,14 +78,16 @@ export async function extractSignals(rawItem: {
   const input = sourceDocument(material).slice(0, 16000);
   const parsed = extractionSchema.safeParse(
     await generateJSON(
-      `Extract an explicitly stated business problem or unmet need. General news, a product launch, or a software bug alone does not prove unmet demand. Do not infer a customer, market gap or willingness to pay unless stated. Return JSON with is_relevant (boolean), problem, pain_point, customer, industry (strings or null), signal_type (pain|demand|trend|complaint|market_gap|regulatory or null), strength (0..1), evidence_quote (an EXACT verbatim substring from input, or null). If relevant, quote is required. Use the source language for the problem so similar documents can be grouped. Data: ${JSON.stringify({ sourceType: rawItem.sourceType, text: input })}`,
+      `Extract an explicitly stated business problem or unmet need. General news, a product launch, or a software bug alone does not prove unmet demand. Do not infer a customer, market gap or willingness to pay unless stated. Return JSON with is_relevant (boolean), problem, pain_point, customer, industry (strings in Russian, or null), problem_en (the same core problem as a short plain English phrase of 5-12 words, generic wording, no product or author names, or null), signal_type (pain|demand|trend|complaint|market_gap|regulatory or null), strength (0..1), evidence_quote (an EXACT verbatim substring from input in its original language, never translated, or null). If relevant, problem, problem_en and quote are required. Data: ${JSON.stringify({ sourceType: rawItem.sourceType, text: input })}`,
     ),
   );
   if (!parsed.success) throw new AIError("invalid_schema");
   const output = parsed.data;
   if (
     output.is_relevant &&
-    (!output.problem?.trim() || !output.signal_type)
+    (!output.problem?.trim() ||
+      !output.problem_en?.trim() ||
+      !output.signal_type)
   )
     throw new AIError("invalid_schema");
   if (output.is_relevant && !quoteInSource(output.evidence_quote, material))

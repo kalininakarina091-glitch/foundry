@@ -78,6 +78,7 @@ export async function extractRawItem(id: string) {
               rawItemId: id,
               type: result.signal_type!,
               title: result.problem,
+              groupingKey: result.problem_en,
               description: result.evidence_quote,
               pain: result.pain_point,
               customer: result.customer,

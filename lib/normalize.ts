@@ -10,7 +10,11 @@ export async function normalizeAllSignals() {
   let duplicates = 0;
   let excluded = 0;
   for (const s of signals) {
-    const problem = normalizeText(s.title || s.pain || s.description || "");
+    // Clustering compares words, so it uses the English grouping phrase; the
+    // Russian title is for display. Older signals fall back to their title.
+    const problem = normalizeText(
+      s.groupingKey || s.title || s.pain || s.description || "",
+    );
     const url = traceableUrl(s.rawItem.url);
     const hasQuote = quoteInSource(s.description, s.rawItem);
     // The same problem in independent documents is corroboration, not a duplicate.
