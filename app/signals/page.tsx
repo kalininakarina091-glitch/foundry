@@ -5,13 +5,25 @@ import PipelineActions from "@/components/pipeline-actions";
 import { sourceDocument } from "@/lib/source-text";
 import { failureLabel, MAX_EXTRACTION_ATTEMPTS } from "@/lib/ai-errors";
 import { extractionAttempts, readMetadata } from "@/lib/extraction";
-import { extractionStatusLabel, signalTypeLabel } from "@/lib/labels";
+import {
+  extractionStatusLabel,
+  materialKindLabel,
+  signalTypeLabel,
+} from "@/lib/labels";
 export const dynamic = "force-dynamic";
 function failureNote(value: string | null) {
   const metadata = readMetadata(value);
   const extraction = metadata.extraction as { reason?: unknown } | undefined;
   const attempts = extractionAttempts(metadata);
   return `Ошибка извлечения: ${failureLabel(extraction?.reason)}. Попыток: ${attempts} из ${MAX_EXTRACTION_ATTEMPTS}.`;
+}
+function materialKind(value: string | null) {
+  const extraction = readMetadata(value).extraction as
+    | { materialKind?: unknown }
+    | undefined;
+  return typeof extraction?.materialKind === "string"
+    ? ` (${materialKindLabel(extraction.materialKind)})`
+    : "";
 }
 const STATUS_ORDER = [
   "extracted",
@@ -137,8 +149,8 @@ export default async function SignalsPage({
           <article key={r.id} className="foundry-card rounded-xl p-5">
             <h2>{r.title}</h2>
             <p className="my-2 text-xs text-muted-foreground">
-              {r.source.name} · {extractionStatusLabel(r.extractionStatus)} ·
-              сигналов: {r.signals.length}
+              {r.source.name} · {extractionStatusLabel(r.extractionStatus)}
+              {materialKind(r.metadata)} · сигналов: {r.signals.length}
             </p>
             {r.extractionStatus === "failed" && (
               <p className="text-amber-300 text-sm">

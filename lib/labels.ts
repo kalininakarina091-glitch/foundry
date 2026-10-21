@@ -34,6 +34,16 @@ const SOURCE_TYPES: Record<string, string> = {
   reddit: "Reddit",
   producthunt: "Product Hunt",
 };
+const MATERIAL_KINDS: Record<string, string> = {
+  own_problem: "описание своей проблемы",
+  solution_request: "поиск решения",
+  bug_report: "баг-репорт продукта",
+  news: "новость",
+  product_launch: "анонс продукта",
+  opinion: "мнение или аналитика",
+  other: "другое",
+};
+export const materialKindLabel = (v: string) => label(MATERIAL_KINDS, v);
 export const RECOMMENDATIONS: Record<string, string> = {
   BUILD: "Развивать",
   "RESEARCH MORE": "Исследовать дальше",

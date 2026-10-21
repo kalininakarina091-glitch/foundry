@@ -25,6 +25,8 @@ export async function extractRawItem(id: string) {
     include: { source: true },
   });
   if (!raw) return { status: 404, error: "Материал не найден" };
+  if (raw.source.status !== "active")
+    return { status: 409, error: "Источник отключён" };
   if (!traceableUrl(raw.url)) {
     await prisma.rawItem.update({
       where: { id },
@@ -98,6 +100,8 @@ export async function extractRawItem(id: string) {
               model: AI_MODEL,
               quote: result.evidence_quote,
               relevant: result.is_relevant,
+              materialKind: result.material_kind ?? null,
+              ...(result.rejected ? { rejected: result.rejected } : {}),
               attempts,
             },
           }),
