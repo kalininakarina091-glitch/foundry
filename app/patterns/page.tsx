@@ -1,9 +1,22 @@
 import { detectPatterns } from "@/lib/patterns";
-import GenerateFromPattern from "@/components/generate-from-pattern";
-import { patternKindLabel } from "@/lib/labels";
+import Link from "next/link";
+import GenerateFromPattern, {
+  ExtendFromPattern,
+} from "@/components/generate-from-pattern";
+import { prisma } from "@/lib/db";
+import { findPatternOverlaps } from "@/lib/opportunity-overlap";
+import { clusterMethodLabel, patternKindLabel } from "@/lib/labels";
 export const dynamic = "force-dynamic";
 export default async function PatternsPage() {
-  const patterns = await detectPatterns();
+  const [patterns, opportunities] = await Promise.all([
+    detectPatterns(),
+    prisma.opportunity.findMany({
+      where: { provenance: { not: null } },
+      select: { id: true, title: true, provenance: true },
+    }),
+  ]);
+  const overlapOf = (signalIds: string[]) =>
+    findPatternOverlaps(signalIds, opportunities)[0];
   return (
     <div className="page-container">
       <h1 className="page-title">Паттерны</h1>
@@ -18,12 +31,16 @@ export default async function PatternsPage() {
         </p>
       )}
       <div className="space-y-4">
-        {patterns.map((p) => (
+        {patterns.map((p) => {
+          const overlap = overlapOf(p.signalIds);
+          return (
           <article key={p.id} className="foundry-card rounded-xl p-5">
             <h2 className="font-semibold">{p.clusterName}</h2>
             <p className="my-3 text-sm">
               {p.signalIds.length} материалов · {p.sourceIds.length} записей
-              источников · эвристическая сила {p.strength}/100
+              источников · эвристическая сила {p.strength}/100 ·{" "}
+              {clusterMethodLabel(p.method.replace("-complete-link-v2", ""))}, мин.
+              сходство {p.cohesion.toFixed(2)}
             </p>
             <details className="text-xs">
               <summary>Цепочка происхождения</summary>
@@ -36,9 +53,38 @@ export default async function PatternsPage() {
               </p>
               <p>Наблюдения: {p.patterns.map(patternKindLabel).join(", ")}</p>
             </details>
-            <GenerateFromPattern patternId={p.id} />
+            {overlap ? (
+              <div className="mt-4 text-sm">
+                <p>
+                  Эта проблема уже есть в возможности{" "}
+                  <Link
+                    className="text-primary"
+                    href={`/opportunities/${encodeURIComponent(overlap.opportunityId)}`}
+                  >
+                    «{overlap.title}»
+                  </Link>
+                  .
+                </p>
+                {overlap.extendable ? (
+                  <ExtendFromPattern
+                    patternId={p.id}
+                    opportunityId={overlap.opportunityId}
+                    newSignals={overlap.newSignalIds.length}
+                  />
+                ) : (
+                  <p className="mt-1 text-muted-foreground">
+                    {overlap.newSignalIds.length
+                      ? "Паттерн пересекается с ней лишь частично; новая гипотеза не создаётся, чтобы не дублировать проблему."
+                      : "Новых сигналов нет."}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <GenerateFromPattern patternId={p.id} />
+            )}
           </article>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -18,7 +18,8 @@ export async function detectPatterns() {
         patterns,
         strength,
         shouldCreateOpportunity: c.signalCount >= 2,
-        method: "lexical-complete-link-v1",
+        method: `${c.method}-complete-link-v2`,
+        cohesion: c.cohesion,
       };
     })
     .sort((a, b) => b.strength - a.strength || a.id.localeCompare(b.id));

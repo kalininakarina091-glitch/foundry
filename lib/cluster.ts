@@ -6,12 +6,14 @@ export async function clusterSignals() {
     include: { rawItem: { include: { source: true } } },
     orderBy: { id: "asc" },
   });
-  return groupSignals(signals).map(({ id, members }) => {
+  return groupSignals(signals).map(({ id, members, method, cohesion }) => {
     const dates = members
       .map((s) => s.rawItem.publishedAt)
       .filter((d): d is Date => Boolean(d));
     return {
       id,
+      method,
+      cohesion,
       name: members[0].title || members[0].normalizedProblem!,
       problem: members[0].normalizedProblem!,
       customer: members[0].customer,
