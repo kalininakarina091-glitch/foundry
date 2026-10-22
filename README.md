@@ -39,8 +39,8 @@ Database files and credentials are ignored by Git.
 details and validation pages. Demo examples never silently replace failed database
 requests, create database records or call the validation provider. `/insights`
 redirects to `/opportunities`. Existing sources, signals, clusters, patterns and
-evidence routes are retained. Legacy reports, team, alerts, simulator and integration
-screens are marked as demonstrations and excluded from primary navigation.
+evidence routes are retained. The legacy reports, team, alerts, simulator and
+integrations demonstration screens were removed; they were not backed by data.
 
 ## Checks
 

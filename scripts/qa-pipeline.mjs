@@ -153,11 +153,6 @@ const pages = [
   "/evidence",
   "/login",
   "/signup",
-  "/reports",
-  "/team",
-  "/alerts",
-  "/simulator",
-  "/integrations",
   `/opportunities/${o.id}`,
   `/validation/${o.id}`,
 ];
