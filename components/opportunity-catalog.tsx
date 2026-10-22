@@ -107,7 +107,7 @@ export default function OpportunityCatalog({
   const tabs = [
     { id: "for-you", label: "Для вас" },
     { id: "all", label: "Все возможности" },
-    { id: "high", label: "Score 80+" },
+    { id: "high", label: "Оценка 80+" },
     { id: "research", label: "К исследованию" },
     { id: "reviewed", label: "Проверялись ранее" },
     { id: "saved", label: "Избранное" },

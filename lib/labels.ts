@@ -63,3 +63,16 @@ const CLUSTER_METHODS: Record<string, string> = {
   mixed: "смешанно",
 };
 export const clusterMethodLabel = (v: string) => label(CLUSTER_METHODS, v);
+// Opportunity.industry stores the generated product type for new records;
+// older records may hold free-text categories, shown as stored.
+const PRODUCT_TYPES: Record<string, string> = {
+  saas: "SaaS",
+  service: "Сервис",
+  tool: "Инструмент",
+  automation: "Автоматизация",
+  ai: "AI",
+};
+export const productTypeLabel = (v: string) =>
+  Object.hasOwn(PRODUCT_TYPES, v.toLowerCase())
+    ? PRODUCT_TYPES[v.toLowerCase()]
+    : v;

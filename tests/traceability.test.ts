@@ -142,3 +142,11 @@ test("provenance rejects unrelated, changed and legacy evidence", async () => {
     0,
   );
 });
+test("a signal whose material was rechecked as not a need leaves evidence and clustering", () => {
+  const a = signal("1"),
+    b = signal("2");
+  const excluded = { ...b, rawItem: { ...b.rawItem, extractionStatus: "irrelevant" } };
+  assert.deepEqual(uniqueSignals([a, excluded]).map((s) => s.id), ["1"]);
+  assert.equal(groupSignals([a, excluded]).length, 0);
+  assert.equal(groupSignals([a, b]).length, 1);
+});

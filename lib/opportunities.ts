@@ -2,6 +2,7 @@ import { readProvenance, signalsFromProvenance } from "@/lib/provenance";
 import { traceableUrl } from "@/lib/traceability";
 import { sourceDocument } from "@/lib/source-text";
 import { evidenceStance } from "@/lib/validation";
+import { productTypeLabel } from "@/lib/labels";
 import { scoreSignals } from "@/lib/scoring";
 import { prisma } from "@/lib/db";
 import { mockOpportunities } from "@/lib/mock-data";
@@ -93,13 +94,13 @@ function databaseOpportunity(item: DatabaseOpportunity): OpportunityView {
   const customers = [
     ...new Set(evidence.map((e) => e.signal.customer).filter(Boolean)),
   ];
-  const categories: Record<string, string> = { saas: "SaaS", ai: "AI" };
+
   return {
     id: item.id,
     title: item.title,
     description: item.description,
     industry: item.industry
-      ? categories[item.industry.toLowerCase()] || item.industry
+      ? productTypeLabel(item.industry)
       : null,
     score: scoreSignals(evidence.map((e) => e.signal)).overall,
     status: item.status,

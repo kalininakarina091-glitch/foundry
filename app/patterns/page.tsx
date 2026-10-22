@@ -5,7 +5,12 @@ import GenerateFromPattern, {
 } from "@/components/generate-from-pattern";
 import { prisma } from "@/lib/db";
 import { findPatternOverlaps } from "@/lib/opportunity-overlap";
-import { clusterMethodLabel, patternKindLabel } from "@/lib/labels";
+import {
+  clusterMethodLabel,
+  patternKindLabel,
+  signalTypeLabel,
+} from "@/lib/labels";
+import { traceableUrl } from "@/lib/traceability";
 export const dynamic = "force-dynamic";
 export default async function PatternsPage() {
   const [patterns, opportunities] = await Promise.all([
@@ -17,6 +22,14 @@ export default async function PatternsPage() {
   ]);
   const overlapOf = (signalIds: string[]) =>
     findPatternOverlaps(signalIds, opportunities)[0];
+  const members = new Map(
+    (
+      await prisma.signal.findMany({
+        where: { id: { in: patterns.flatMap((p) => p.signalIds) } },
+        include: { rawItem: { include: { source: true } } },
+      })
+    ).map((s) => [s.id, s]),
+  );
   return (
     <div className="page-container">
       <h1 className="page-title">Паттерны</h1>
@@ -42,7 +55,35 @@ export default async function PatternsPage() {
               {clusterMethodLabel(p.method.replace("-complete-link-v2", ""))}, мин.
               сходство {p.cohesion.toFixed(2)}
             </p>
-            <details className="text-xs">
+            <ul className="space-y-3">
+              {p.signalIds.map((id) => {
+                const s = members.get(id);
+                if (!s) return null;
+                const url = traceableUrl(s.rawItem.url);
+                return (
+                  <li key={id} className="border-l-2 border-border pl-3 text-sm">
+                    <p className="text-xs text-muted-foreground">
+                      {signalTypeLabel(s.type)} · {s.rawItem.source.name}
+                    </p>
+                    <p className="mt-1">{s.title}</p>
+                    {s.description && (
+                      <p className="mt-1 text-muted-foreground">«{s.description}»</p>
+                    )}
+                    {url && (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary"
+                      >
+                        Первоисточник ↗
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <details className="mt-3 text-xs">
               <summary>Цепочка происхождения</summary>
               <p className="break-all mt-2">
                 Кластер {p.clusterId} → паттерн {p.id}
