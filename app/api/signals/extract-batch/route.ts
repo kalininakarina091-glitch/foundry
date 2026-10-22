@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     where: {
       extractionStatus: retryFailed ? "failed" : "pending",
       signals: { none: {} },
+      source: { status: "active" },
     },
     orderBy: [{ fetchedAt: "asc" }, { id: "asc" }],
     // Attempts live in metadata JSON, so failed records are filtered here.

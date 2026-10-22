@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { ValidationEvidence } from "@/lib/validation";
 import { AIError } from "@/lib/ai-errors";
 import { quoteInSource, sourceDocument } from "@/lib/source-text";
+import { acceptSignal, MATERIAL_KINDS } from "@/lib/signal-gate";
 export const AI_MODEL =
   process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct";
 export async function generateJSON(prompt: string): Promise<unknown> {
@@ -64,6 +65,7 @@ export const extractionSchema = z.object({
     .nullable(),
   strength: z.number().min(0).max(1),
   evidence_quote: z.string().max(2000).nullable(),
+  material_kind: z.enum(MATERIAL_KINDS).optional(),
 });
 export async function extractSignals(rawItem: {
   title: string | null;
@@ -78,11 +80,22 @@ export async function extractSignals(rawItem: {
   const input = sourceDocument(material).slice(0, 16000);
   const parsed = extractionSchema.safeParse(
     await generateJSON(
-      `Extract an explicitly stated business problem or unmet need. General news, a product launch, or a software bug alone does not prove unmet demand. Do not infer a customer, market gap or willingness to pay unless stated. Return JSON with is_relevant (boolean), problem, pain_point, customer, industry (strings in Russian, or null), problem_en (the same core problem as a short plain English phrase of 5-12 words, generic wording, no product or author names, or null), signal_type (pain|demand|trend|complaint|market_gap|regulatory or null), strength (0..1), evidence_quote (an EXACT verbatim substring from input in its original language, never translated, or null). If relevant, problem, problem_en and quote are required. Data: ${JSON.stringify({ sourceType: rawItem.sourceType, text: input })}`,
+      `Decide whether this material shows a real person or business describing a recurring problem or an unmet need that a product or service could address.
+First classify material_kind:
+- own_problem: the author (or people they directly describe) has a problem, frustration or costly workaround in their work or life;
+- solution_request: the author asks how to solve a problem or looks for a tool/service;
+- bug_report: a defect, crash or error of one specific product, library, game or service;
+- news: news about companies, funding, markets, people or events;
+- product_launch: announcement or promotion of a product, release or feature;
+- opinion: commentary or analysis without a concrete affected person;
+- other: anything else.
+Only own_problem and solution_request can be relevant. A bug of one specific product, company news, a product launch or market commentary is never relevant, even if it mentions a problem.
+Do not infer a customer, market gap or willingness to pay unless stated.
+Return JSON with material_kind, is_relevant (boolean), problem, pain_point, customer, industry (strings in Russian, or null), problem_en (the same core problem as a short plain English phrase of 5-12 words, generic wording, no product or author names, or null), signal_type (pain|demand|trend|complaint|market_gap|regulatory or null), strength (0..1), evidence_quote (an EXACT verbatim substring from input in its original language, never translated, or null). If relevant, problem, problem_en, quote and at least one of pain_point or customer are required. Data: ${JSON.stringify({ sourceType: rawItem.sourceType, text: input })}`,
     ),
   );
   if (!parsed.success) throw new AIError("invalid_schema");
-  const output = parsed.data;
+  const output = acceptSignal(parsed.data);
   if (
     output.is_relevant &&
     (!output.problem?.trim() ||

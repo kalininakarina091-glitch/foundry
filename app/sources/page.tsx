@@ -208,6 +208,31 @@ export default function SourcesPage() {
     }
   }
 
+  async function handleToggle(source: Source) {
+    const status = source.status === "active" ? "disabled" : "active";
+    setSyncingId(source.id);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/source/${source.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Не удалось изменить статус.");
+      setMessage(
+        status === "active"
+          ? `✓ Источник «${source.name}» включён.`
+          : `✓ Источник «${source.name}» отключён: его материалы не попадут в синхронизацию и извлечение.`,
+      );
+      setRevision((value) => value + 1);
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Не удалось изменить статус.");
+    } finally {
+      setSyncingId(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="px-8 py-7">
@@ -286,6 +311,15 @@ export default function SourcesPage() {
                 ? "Синхронизация..."
                 : "Синхронизировать"}
             </button>
+            {source.status !== "error" && (
+              <button
+                onClick={() => handleToggle(source)}
+                disabled={syncingId === source.id}
+                className="mt-2 w-full rounded-xl px-4 py-2 text-sm text-neutral-400 hover:text-white"
+              >
+                {source.status === "active" ? "Отключить" : "Включить"}
+              </button>
+            )}
           </article>
         ))}
       </div>
