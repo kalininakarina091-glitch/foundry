@@ -76,3 +76,11 @@ test("extraction failures are classified without leaking provider details", () =
   assert.equal(failureLabel("__proto__"), "Неизвестная ошибка");
   assert.equal(failureLabel(undefined), "Неизвестная ошибка");
 });
+
+test("credit and rate-limit failures get actionable reasons", async () => {
+  const { httpFailure } = await import("../lib/ai-errors.ts");
+  assert.deepEqual(failureOf(httpFailure(402)), { reason: "provider_credits", httpStatus: 402 });
+  assert.deepEqual(failureOf(httpFailure(429)), { reason: "provider_rate_limit", httpStatus: 429 });
+  assert.deepEqual(failureOf(httpFailure(500)), { reason: "provider_http", httpStatus: 500 });
+  assert.equal(failureLabel("provider_credits"), "Недостаточно кредитов OpenRouter");
+});
