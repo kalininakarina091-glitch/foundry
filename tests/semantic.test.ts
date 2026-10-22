@@ -70,3 +70,19 @@ test("vectors of different models are never compared; words are used instead", (
   ]);
   assert.equal(unrelated.length, 0);
 });
+
+test("each embedding model uses its own calibrated threshold", async () => {
+  const { semanticThreshold, SEMANTIC_THRESHOLD } = await import("../lib/semantic.ts");
+  assert.equal(semanticThreshold("openai/text-embedding-3-small"), 0.5);
+  assert.equal(semanticThreshold("nvidia/nemotron-3.5-embed-1b:free"), 0.4);
+  assert.equal(semanticThreshold("unknown/model"), SEMANTIC_THRESHOLD);
+  // 0.45 links under the free model's calibration but not under the default.
+  const v = (x: number) => [x, Math.sqrt(1 - x * x)];
+  const pair = (model: string) =>
+    groupSignals([
+      signal("1", "reconciling orders across channels", [1, 0], model),
+      signal("2", "matching marketplace purchases by hand", v(0.45), model),
+    ]).length;
+  assert.equal(pair("nvidia/nemotron-3.5-embed-1b:free"), 1);
+  assert.equal(pair("openai/text-embedding-3-small"), 0);
+});

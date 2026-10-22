@@ -1,4 +1,4 @@
-import { AIError } from "@/lib/ai-errors";
+import { AIError, httpFailure } from "@/lib/ai-errors";
 import { encodeEmbedding } from "@/lib/semantic";
 export const EMBEDDING_MODEL =
   process.env.OPENROUTER_EMBEDDING_MODEL || "openai/text-embedding-3-small";
@@ -28,7 +28,7 @@ export async function embedTexts(texts: string[]): Promise<string[]> {
           : "provider_unavailable",
       );
     }
-    if (!response.ok) throw new AIError("provider_http", response.status);
+    if (!response.ok) throw httpFailure(response.status);
     const data = await response.json().catch(() => null);
     const rows: unknown = data?.data;
     if (!Array.isArray(rows) || rows.length !== input.length)
