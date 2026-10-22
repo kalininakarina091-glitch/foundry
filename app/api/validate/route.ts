@@ -37,7 +37,13 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     // Bound provider context while making the scope of the report explicit.
-    const evidence = opportunity.evidence.slice(0, 40);
+    // Earlier verdicts are display-only and must not anchor a new validation.
+    const evidence = opportunity.evidence.slice(0, 40).map((e) => {
+      const { stance, stanceCheckedAt, ...rest } = e;
+      void stance;
+      void stanceCheckedAt;
+      return rest;
+    });
     const stats = evidenceStats(evidence);
     if (!hasEnoughEvidence(evidence))
       return NextResponse.json({

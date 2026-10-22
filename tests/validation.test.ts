@@ -136,3 +136,19 @@ test("placeholder, same-host and uncited corroboration cannot justify BUILD", ()
     "RESEARCH MORE",
   );
 });
+
+test("evidence stance comes only from unambiguous citations of a stored report", async () => {
+  const { evidenceStance } = await import("../lib/validation.ts");
+  const report = JSON.stringify({
+    ...insufficientReport(),
+    positive_evidence: [{ claim: "за", evidence_ids: ["e0", "e1"] }],
+    negative_evidence: [{ claim: "против", evidence_ids: ["e1", "e2"] }],
+  });
+  const stance = evidenceStance(report);
+  assert.equal(stance.get("e0"), "positive");
+  assert.equal(stance.get("e2"), "negative");
+  assert.equal(stance.has("e1"), false);
+  assert.equal(evidenceStance("{").size, 0);
+  assert.equal(evidenceStance(null).size, 0);
+  assert.equal(evidenceStance(JSON.stringify({ verdict: "x" })).size, 0);
+});

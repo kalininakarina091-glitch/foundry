@@ -1,6 +1,7 @@
 import { readProvenance, signalsFromProvenance } from "@/lib/provenance";
 import { traceableUrl } from "@/lib/traceability";
 import { sourceDocument } from "@/lib/source-text";
+import { evidenceStance } from "@/lib/validation";
 import { scoreSignals } from "@/lib/scoring";
 import { prisma } from "@/lib/db";
 import { mockOpportunities } from "@/lib/mock-data";
@@ -15,7 +16,12 @@ const opportunityInclude = {
   validations: {
     orderBy: { createdAt: "desc" },
     take: 1,
-    select: { confidence: true, recommendation: true, createdAt: true },
+    select: {
+      confidence: true,
+      recommendation: true,
+      createdAt: true,
+      report: true,
+    },
   },
 } as const;
 function demoOpportunity(
@@ -80,6 +86,10 @@ function databaseOpportunity(item: DatabaseOpportunity): OpportunityView {
       signalIds: p.signals.map((s: { signalId: string }) => s.signalId),
     };
   } catch {}
+  // Stored evidence is neutral; the latest saved validation states which
+  // items it cited for or against the hypothesis.
+  const stance = evidenceStance(item.validations[0]?.report);
+  const stanceCheckedAt = item.validations[0]?.createdAt.toISOString();
   const customers = [
     ...new Set(evidence.map((e) => e.signal.customer).filter(Boolean)),
   ];
@@ -116,6 +126,9 @@ function databaseOpportunity(item: DatabaseOpportunity): OpportunityView {
       id: e.id,
       claim: e.claim,
       type: e.evidenceType,
+      ...(stance.has(e.id)
+        ? { stance: stance.get(e.id), stanceCheckedAt: stanceCheckedAt! }
+        : {}),
       strength: e.strength,
       signalId: e.signal.id,
       signalType: e.signal.type,

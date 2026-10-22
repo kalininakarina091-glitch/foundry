@@ -12,6 +12,15 @@ export async function proxy(request: NextRequest) {
       { error: "Задайте APP_ORIGIN для этого окружения." },
       { status: 503 },
     );
+  // Scheduled pipeline: no browser session or Origin; the route itself
+  // requires the CRON_SECRET bearer token and fails closed without it.
+  if (path === "/api/cron/pipeline")
+    return databaseConfigured()
+      ? NextResponse.next()
+      : NextResponse.json(
+          { error: DATABASE_DEPLOYMENT_MESSAGE },
+          { status: 503, headers: { "Cache-Control": "no-store" } },
+        );
   const mutation = !["GET", "HEAD", "OPTIONS"].includes(request.method);
   if (mutation && !sameOrigin(request))
     return NextResponse.json(

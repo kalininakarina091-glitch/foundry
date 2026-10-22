@@ -57,3 +57,9 @@ export const extractionStatusLabel = (v: string) =>
 export const patternKindLabel = (v: string) => label(PATTERN_KINDS, v);
 export const sourceTypeLabel = (v: string) => label(SOURCE_TYPES, v);
 export const recommendationLabel = (v: string) => label(RECOMMENDATIONS, v);
+const CLUSTER_METHODS: Record<string, string> = {
+  semantic: "по смыслу",
+  lexical: "по совпадению слов",
+  mixed: "смешанно",
+};
+export const clusterMethodLabel = (v: string) => label(CLUSTER_METHODS, v);

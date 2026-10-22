@@ -51,3 +51,50 @@ export default function GenerateFromPattern({
     </div>
   );
 }
+export function ExtendFromPattern({
+  patternId,
+  opportunityId,
+  newSignals,
+}: {
+  patternId: string;
+  opportunityId: string;
+  newSignals: number;
+}) {
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState("");
+  async function extend() {
+    setPending(true);
+    setMessage("");
+    try {
+      const r = await fetch(
+        `/api/opportunities/${encodeURIComponent(opportunityId)}/extend`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patternId }),
+        },
+      );
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error);
+      setMessage(
+        `Добавлено доказательств: ${data.added}. Оценка возможности: ${data.score}.`,
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Ошибка обновления");
+    } finally {
+      setPending(false);
+    }
+  }
+  return (
+    <div className="mt-3">
+      <button className="button-primary" disabled={pending} onClick={extend}>
+        {pending
+          ? "Добавление…"
+          : `Добавить ${newSignals} новых сигналов как доказательства`}
+      </button>
+      <p role="status" className="my-2 text-sm">
+        {message}
+      </p>
+    </div>
+  );
+}

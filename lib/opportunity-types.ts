@@ -14,6 +14,12 @@ export interface EvidenceView {
   url: string | null;
   date: string;
   dateKind?: "published" | "captured";
+  /**
+   * Display only: how the latest saved validation cited this item. Never sent
+   * back to the model, so a new validation is not anchored on the previous one.
+   */
+  stance?: "positive" | "negative";
+  stanceCheckedAt?: string;
 }
 export interface OpportunityView {
   origin?: { patternId: string; clusterId: string; signalIds: string[] };

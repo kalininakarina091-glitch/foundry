@@ -100,3 +100,25 @@ export function checkValidationReport(
   }
   return report;
 }
+/**
+ * Evidence ids cited for ("positive") or against ("negative") in a stored
+ * report. An id cited on both sides stays unlabelled.
+ */
+export function evidenceStance(
+  report: string | null | undefined,
+): Map<string, "positive" | "negative"> {
+  const stance = new Map<string, "positive" | "negative">();
+  if (!report) return stance;
+  let parsed;
+  try {
+    parsed = validationSchema.safeParse(JSON.parse(report));
+  } catch {
+    return stance;
+  }
+  if (!parsed.success) return stance;
+  const pos = new Set(parsed.data.positive_evidence.flatMap((c) => c.evidence_ids));
+  const neg = new Set(parsed.data.negative_evidence.flatMap((c) => c.evidence_ids));
+  for (const id of pos) if (!neg.has(id)) stance.set(id, "positive");
+  for (const id of neg) if (!pos.has(id)) stance.set(id, "negative");
+  return stance;
+}

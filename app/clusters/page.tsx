@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { clusterSignals } from "@/lib/cluster";
+import { clusterMethodLabel } from "@/lib/labels";
+import { SEMANTIC_THRESHOLD } from "@/lib/semantic";
 export const dynamic = "force-dynamic";
 export default async function ClustersPage() {
   const clusters = await clusterSignals();
@@ -7,7 +9,9 @@ export default async function ClustersPage() {
     <div className="page-container">
       <h1 className="page-title">Кластеры сигналов</h1>
       <p className="my-4 text-muted-foreground">
-        Детерминированное лексическое сходство. Используются только
+        Сигналы объединяются, если каждая пара в кластере похожа по смыслу
+        (эмбеддинги английских ключей группировки, порог {SEMANTIC_THRESHOLD})
+        или, если эмбеддингов нет, по совпадению слов. Используются только
         нормализованные сигналы с публичными ссылками; каждый кластер сохраняет
         точные ID участников.
       </p>
@@ -20,7 +24,8 @@ export default async function ClustersPage() {
           <article key={c.id} className="foundry-card rounded-xl p-5">
             <h2>{c.name}</h2>
             <p className="my-3 text-sm">
-              {c.signalCount} материалов · {c.sourceCount} записей источников
+              {c.signalCount} материалов · {c.sourceCount} записей источников ·{" "}
+              {clusterMethodLabel(c.method)}, мин. сходство {c.cohesion.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">
               Даты публикаций:{" "}

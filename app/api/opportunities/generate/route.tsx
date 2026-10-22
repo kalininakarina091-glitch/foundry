@@ -5,6 +5,7 @@ import { detectPatterns } from "@/lib/patterns";
 import { generateOpportunityFromCluster } from "@/lib/opportunity-generator";
 import { scoreSignals } from "@/lib/scoring";
 import { AI_MODEL } from "@/lib/ai";
+import { findPatternOverlaps } from "@/lib/opportunity-overlap";
 export async function POST(request: Request) {
   const parsed = z
     .object({ patternId: z.string().min(1).max(200) })
@@ -32,6 +33,21 @@ export async function POST(request: Request) {
   if (!pattern?.shouldCreateOpportunity)
     return NextResponse.json(
       { error: "Паттерн отсутствует или устарел. Обновите список." },
+      { status: 409 },
+    );
+  const [overlap] = findPatternOverlaps(
+    pattern.signalIds,
+    await prisma.opportunity.findMany({
+      where: { provenance: { not: null } },
+      select: { id: true, title: true, provenance: true },
+    }),
+  );
+  if (overlap)
+    return NextResponse.json(
+      {
+        error: `Эта проблема уже есть в возможности «${overlap.title}». ${overlap.extendable ? `Добавьте ${overlap.newSignalIds.length} новых сигналов как доказательства вместо создания дубля.` : "Паттерн частично пересекается с ней; новая гипотеза не создаётся."}`,
+        existing: overlap,
+      },
       { status: 409 },
     );
   if (pattern.signalIds.length > 40)

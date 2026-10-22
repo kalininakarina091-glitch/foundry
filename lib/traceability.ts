@@ -1,5 +1,11 @@
 import { traceableUrl } from "./source-url.ts";
 import { quoteInSource } from "./source-text.ts";
+import {
+  cosine,
+  decodeEmbedding,
+  LEXICAL_THRESHOLD,
+  SEMANTIC_THRESHOLD,
+} from "./semantic.ts";
 export { traceableUrl } from "./source-url.ts";
 import { createHash } from "node:crypto";
 export function normalizeText(value: string): string {
@@ -42,6 +48,7 @@ export interface PipelineSignal {
   strength: number;
   createdAt: Date;
   duplicateOf: string | null;
+  embedding?: string | null;
   rawItem: {
     id: string;
     url: string | null;
@@ -84,23 +91,42 @@ export function groupSignals<T extends PipelineSignal>(input: T[]) {
     .sort((a, b) => a.id.localeCompare(b.id));
   const groups: T[][] = [];
   for (const signal of signals) {
+    // Complete link: a signal joins only if it matches every member.
     const group = groups.find((g) =>
-      g.every(
-        (member) =>
-          similarity(member.normalizedProblem!, signal.normalizedProblem!) >=
-          0.28,
-      ),
+      g.every((member) => pairMatch(member, signal).linked),
     );
     if (group) group.push(signal);
     else groups.push([signal]);
   }
   return groups
     .filter((g) => g.length >= 2)
-    .map((members) => ({
-      id: hashId(
-        "cluster",
-        members.map((s) => s.id),
-      ),
-      members,
-    }));
+    .map((members) => {
+      const pairs = members.flatMap((a, i) =>
+        members.slice(i + 1).map((b) => pairMatch(a, b)),
+      );
+      const methods = new Set(pairs.map((p) => p.method));
+      return {
+        id: hashId(
+          "cluster",
+          members.map((s) => s.id),
+        ),
+        members,
+        method:
+          methods.size > 1
+            ? ("mixed" as const)
+            : (pairs[0].method as "semantic" | "lexical"),
+        cohesion: Math.min(...pairs.map((p) => p.score)),
+      };
+    });
+}
+/** Semantic when both signals carry embeddings of one model, else lexical. */
+export function pairMatch(a: PipelineSignal, b: PipelineSignal) {
+  const ea = decodeEmbedding(a.embedding),
+    eb = decodeEmbedding(b.embedding);
+  if (ea && eb && ea.model === eb.model) {
+    const score = cosine(ea.v, eb.v);
+    return { method: "semantic" as const, score, linked: score >= SEMANTIC_THRESHOLD };
+  }
+  const score = similarity(a.normalizedProblem || "", b.normalizedProblem || "");
+  return { method: "lexical" as const, score, linked: score >= LEXICAL_THRESHOLD };
 }

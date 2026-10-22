@@ -108,9 +108,11 @@ export function EvidenceCard({ evidence }: { evidence: EvidenceView }) {
   return (
     <article className="rounded-xl border border-border p-5">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-        <span className={tones[evidence.type] || tones.neutral}>
-          {labels[evidence.type] || "Контекст"} ·{" "}
-          {signalTypeLabel(evidence.signalType)}
+        <span className={tones[evidence.stance ?? evidence.type] || tones.neutral}>
+          {labels[evidence.stance ?? evidence.type] || "Контекст"}
+          {evidence.stanceCheckedAt &&
+            ` (по проверке от ${new Date(evidence.stanceCheckedAt).toLocaleDateString("ru-RU")})`}{" "}
+          · {signalTypeLabel(evidence.signalType)}
         </span>
         <span className="text-muted-foreground">
           Сила сигнала{" "}
