@@ -6,6 +6,7 @@ import { generateOpportunityFromCluster } from "@/lib/opportunity-generator";
 import { scoreSignals } from "@/lib/scoring";
 import { AI_MODEL } from "@/lib/ai";
 import { findPatternOverlaps } from "@/lib/opportunity-overlap";
+import { toMatchAttributes } from "@/lib/match-fit";
 export async function POST(request: Request) {
   const parsed = z
     .object({ patternId: z.string().min(1).max(200) })
@@ -100,6 +101,9 @@ export async function POST(request: Request) {
         title: result.title,
         description: result.problem,
         industry: result.opportunity_type,
+        matchAttributes: JSON.stringify(
+          toMatchAttributes(result.fit, result.opportunity_type),
+        ),
         score: score.overall,
         evidence: {
           create: supporting.map((s) => ({

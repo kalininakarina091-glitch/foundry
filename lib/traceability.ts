@@ -55,6 +55,8 @@ export interface PipelineSignal {
     content: string | null;
     title?: string | null;
     sourceId: string;
+    /** "irrelevant" after a recheck: the signal stays for provenance only. */
+    extractionStatus?: string;
     publishedAt: Date | null;
     source: { id: string; name: string; type: string };
   };
@@ -63,6 +65,7 @@ export function isTraceableSignal(signal: PipelineSignal): boolean {
   return (
     !!traceableUrl(signal.rawItem.url) &&
     !signal.duplicateOf &&
+    signal.rawItem.extractionStatus !== "irrelevant" &&
     quoteInSource(signal.description, signal.rawItem)
   );
 }

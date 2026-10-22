@@ -20,7 +20,11 @@ export async function normalizeAllSignals() {
       s.groupingKey || s.title || s.pain || s.description || "",
     );
     const url = traceableUrl(s.rawItem.url);
-    const hasQuote = quoteInSource(s.description, s.rawItem);
+    // A material rechecked as "not a need" keeps its signal for provenance
+    // but takes no part in clustering.
+    const hasQuote =
+      s.rawItem.extractionStatus !== "irrelevant" &&
+      quoteInSource(s.description, s.rawItem);
     // The same problem in independent documents is corroboration, not a duplicate.
     const eligible = !!url && !!problem && hasQuote;
     const duplicateOf = eligible ? canonical.get(url) || null : null;
