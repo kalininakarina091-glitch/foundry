@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { clusterSignals } from "@/lib/cluster";
 import { clusterMethodLabel } from "@/lib/labels";
-import { SEMANTIC_THRESHOLD } from "@/lib/semantic";
 export const dynamic = "force-dynamic";
 export default async function ClustersPage() {
   const clusters = await clusterSignals();
@@ -10,7 +9,8 @@ export default async function ClustersPage() {
       <h1 className="page-title">Кластеры сигналов</h1>
       <p className="my-4 text-muted-foreground">
         Сигналы объединяются, если каждая пара в кластере похожа по смыслу
-        (эмбеддинги английских ключей группировки, порог {SEMANTIC_THRESHOLD})
+        (эмбеддинги английских ключей группировки; порог откалиброван для
+        каждой модели эмбеддингов)
         или, если эмбеддингов нет, по совпадению слов. Используются только
         нормализованные сигналы с публичными ссылками; каждый кластер сохраняет
         точные ID участников.

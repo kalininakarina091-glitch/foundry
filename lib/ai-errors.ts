@@ -25,6 +25,18 @@ export class AIError extends Error {
     if (httpStatus !== undefined) this.httpStatus = httpStatus;
   }
 }
+const PROVIDER_SIDE = new Set<string>([
+  "provider_not_configured",
+  "provider_timeout",
+  "provider_unavailable",
+  "provider_http",
+  "provider_credits",
+  "provider_rate_limit",
+]);
+/** Failures caused by the provider rather than by the model's answer. */
+export function isProviderSide(reason: string): boolean {
+  return PROVIDER_SIDE.has(reason);
+}
 /** AIError for a non-OK provider response, with specific reasons where actionable. */
 export function httpFailure(status: number): AIError {
   return new AIError(

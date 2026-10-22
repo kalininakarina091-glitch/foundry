@@ -3,6 +3,7 @@ import { extractSignals, AI_MODEL } from "@/lib/ai";
 import {
   failureLabel,
   failureOf,
+  isProviderSide,
   MAX_EXTRACTION_ATTEMPTS,
 } from "@/lib/ai-errors";
 import { traceableUrl } from "@/lib/traceability";
@@ -116,16 +117,19 @@ export async function extractRawItem(id: string) {
     console.error(
       `[extraction] rawItem=${id} attempt=${attempts} reason=${failure.reason}${failure.httpStatus ? ` http=${failure.httpStatus}` : ""}`,
     );
+    // Provider-side problems (limits, credits, outages) say nothing about the
+    // material: it goes back to the queue without using up an attempt.
+    const providerSide = isProviderSide(failure.reason);
     await prisma.rawItem.update({
       where: { id },
       data: {
-        extractionStatus: "failed",
+        extractionStatus: providerSide ? "pending" : "failed",
         metadata: JSON.stringify({
           ...metadata,
           extraction: {
             model: AI_MODEL,
             failedAt: new Date().toISOString(),
-            attempts,
+            attempts: providerSide ? attempts - 1 : attempts,
             ...failure,
           },
         }),

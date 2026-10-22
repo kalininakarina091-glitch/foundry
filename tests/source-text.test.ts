@@ -84,3 +84,11 @@ test("credit and rate-limit failures get actionable reasons", async () => {
   assert.deepEqual(failureOf(httpFailure(500)), { reason: "provider_http", httpStatus: 500 });
   assert.equal(failureLabel("provider_credits"), "Недостаточно кредитов OpenRouter");
 });
+
+test("only provider-side failures return a material to the queue", async () => {
+  const { isProviderSide } = await import("../lib/ai-errors.ts");
+  for (const r of ["provider_rate_limit", "provider_credits", "provider_timeout", "provider_unavailable", "provider_http"])
+    assert.equal(isProviderSide(r), true, r);
+  for (const r of ["invalid_json", "invalid_schema", "quote_not_found", "unknown"])
+    assert.equal(isProviderSide(r), false, r);
+});
