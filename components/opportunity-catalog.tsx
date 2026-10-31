@@ -8,6 +8,7 @@ import { usePreferences } from "@/lib/use-preferences";
 import { EmptyState } from "@/components/product-ui";
 import type { OpportunityView } from "@/lib/opportunity-types";
 import { METRICS } from "@/lib/labels";
+import { decisionLabel } from "@/lib/decisions";
 export default function OpportunityCatalog({
   opportunities,
   initialQuery = "",
@@ -40,6 +41,7 @@ export default function OpportunityCatalog({
   const [personal, setPersonal] = useState<{
     saved: string[];
     dismissed: string[];
+    decisions?: Record<string, string>;
     limited: boolean;
     matches: Record<string, MatchResult>;
   } | null>(null);
@@ -108,7 +110,9 @@ export default function OpportunityCatalog({
           ? o.status === "validated"
           : value === "saved"
             ? saved.includes(o.id)
-            : true;
+            : value === "mine"
+              ? Boolean(personal?.decisions?.[o.id])
+              : true;
   const tabs = [
     { id: "for-you", label: "Для вас" },
     { id: "all", label: "Все возможности" },
@@ -116,6 +120,7 @@ export default function OpportunityCatalog({
     { id: "research", label: "К исследованию" },
     { id: "reviewed", label: "Проверялись ранее" },
     { id: "saved", label: "Избранное" },
+    { id: "mine", label: "Мои решения" },
   ];
   const filtered = opportunities
     .filter(
@@ -357,6 +362,7 @@ export default function OpportunityCatalog({
               match={tab === "for-you" ? personal?.matches[o.id] : undefined}
               dismissed={personal?.dismissed.includes(o.id) || false}
               onDismiss={() => action(o, "feedback")}
+              decision={decisionLabel(personal?.decisions?.[o.id])}
               {...(o.demo
                 ? {}
                 : {
@@ -384,11 +390,19 @@ export default function OpportunityCatalog({
         </EmptyState>
       ) : (
         <EmptyState
-          title={tab === "saved" ? "В избранном пока пусто" : "Нет совпадений"}
+          title={
+            tab === "saved"
+              ? "В избранном пока пусто"
+              : tab === "mine"
+                ? "Решений пока нет"
+                : "Нет совпадений"
+          }
           description={
             tab === "saved"
               ? "Нажмите на закладку в карточке, чтобы вернуться к возможности позже."
-              : "Измените запрос или сбросьте фильтры."
+              : tab === "mine"
+                ? "Откройте возможность и отметьте «Изучаю», «Развиваю» или «Отказ» — здесь будут все ваши решения."
+                : "Измените запрос или сбросьте фильтры."
           }
         >
           <button

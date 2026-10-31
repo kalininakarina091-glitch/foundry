@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOpportunity } from "@/lib/opportunities";
+import { currentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import DecisionPanel from "@/components/decision-panel";
 import EvidenceActions from "@/components/evidence-actions";
 import {
   DemoNotice,
@@ -21,6 +24,14 @@ export default async function OpportunityDetailPage({
   const { id } = await params;
   const demo = (await searchParams).mode === "demo";
   const opportunity = await getOpportunity(id, demo);
+  // The signed-in user's own decision; demo examples have none.
+  const user = opportunity && !opportunity.demo ? await currentUser() : null;
+  const decision = user
+    ? await prisma.opportunityDecision.findUnique({
+        where: { userId_opportunityId: { userId: user.id, opportunityId: opportunity!.id } },
+        select: { status: true, note: true, updatedAt: true },
+      })
+    : null;
   if (!opportunity) notFound();
   return (
     <div className="page-container">
@@ -89,6 +100,16 @@ export default async function OpportunityDetailPage({
           </section>
           {opportunity.scoreBreakdown && (
             <ScoreBreakdown score={opportunity.scoreBreakdown} />
+          )}
+          {user && (
+            <DecisionPanel
+              opportunityId={opportunity.id}
+              initial={{
+                status: decision?.status ?? null,
+                note: decision?.note ?? "",
+                updatedAt: decision?.updatedAt.toISOString() ?? null,
+              }}
+            />
           )}
           <section id="evidence">
             <div className="mb-4 flex items-center gap-3">

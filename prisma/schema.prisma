@@ -90,6 +90,7 @@ model Opportunity {
   matchAttributes String?
   savedBy SavedOpportunity[]
   feedback OpportunityFeedback[]
+  decisions OpportunityDecision[]
   id           String    @id @default(cuid())
   title        String
   description  String?
@@ -116,6 +117,7 @@ model User {
   sessions Session[]
   saved SavedOpportunity[]
   feedback OpportunityFeedback[]
+  decisions OpportunityDecision[]
   validations ValidationRun[]
 }
 // One model-backed validation of an opportunity. The report and the exact
@@ -182,6 +184,19 @@ model OpportunityFeedback {
   kind String
   createdAt DateTime @default(now())
   @@id([userId, opportunityId])
+}
+// A user's own decision about an opportunity and private notes. Personal:
+// never changes shared market data, Opportunity Score or Validation.
+model OpportunityDecision {
+  userId String
+  opportunityId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  status String?
+  note String @default("")
+  updatedAt DateTime @updatedAt
+  @@id([userId, opportunityId])
+  @@index([userId, status])
 }
 model AuthThrottle {
   key String @id
