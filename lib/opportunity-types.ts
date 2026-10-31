@@ -1,3 +1,4 @@
+import type { OpportunityScore } from "./opportunity-score.ts";
 export interface EvidenceView {
   id: string;
   claim: string | null;
@@ -24,6 +25,8 @@ export interface EvidenceView {
 export interface OpportunityView {
   origin?: { patternId: string; clusterId: string; signalIds: string[] };
   excludedEvidence?: number;
+  /** Dimensions behind score; absent for demo examples. */
+  scoreBreakdown?: OpportunityScore;
   /** Latest saved model-backed validation, if any. */
   validation?: {
     confidence: number;

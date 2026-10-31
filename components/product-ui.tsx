@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, Layers3 } from "lucide-react";
 import { safeSourceUrl, type EvidenceView } from "@/lib/opportunity-types";
 import { METRICS, signalTypeLabel } from "@/lib/labels";
+import type { OpportunityScore } from "@/lib/opportunity-score";
 
 export function PageHeader({
   eyebrow,
@@ -69,7 +70,7 @@ export function ScoreBadge({ score }: { score: number }) {
   return (
     <div
       className="shrink-0 text-right"
-      title="Эвристическая оценка поддержки материалами, не вероятность успеха"
+      title="Доказательства, выраженность спроса, актуальность и упоминания трат. Не вероятность успеха"
     >
       <p className="text-xs text-muted-foreground">
         {METRICS.opportunityScore}
@@ -81,6 +82,39 @@ export function ScoreBadge({ score }: { score: number }) {
         </span>
       </p>
     </div>
+  );
+}
+export function ScoreBreakdown({ score }: { score: OpportunityScore }) {
+  return (
+    <section className="rounded-xl border border-border p-5">
+      <h2 className="text-lg font-semibold">Из чего сложилась оценка</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {METRICS.opportunityScore}: {score.overall}/100 · измерено {score.coverage}%
+        веса. Измерения без данных не учитываются и не считаются нулём.
+      </p>
+      <ul className="mt-4 space-y-3">
+        {score.dimensions.map((d) => (
+          <li key={d.id} className="text-sm">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-medium">
+                {d.label} <span className="text-muted-foreground">· вес {d.weight}</span>
+              </span>
+              <span className="tabular-nums">
+                {d.value === null ? "нет данных" : `${d.value}/100`}
+              </span>
+            </div>
+            {d.value !== null && (
+              <meter className="mt-1 h-1.5 w-full" min={0} max={100} value={d.value} />
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">{d.basis}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-xs text-muted-foreground">
+        Конкуренты и размер рынка в оценку не входят: у Foundry нет проверяемых
+        данных о них.
+      </p>
+    </section>
   );
 }
 const statuses: Record<string, string> = {
