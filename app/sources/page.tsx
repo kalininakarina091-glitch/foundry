@@ -174,6 +174,18 @@ export default function SourcesPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   const [revision, setRevision] = useState(0);
+  // Same session lookup as proxy; controls are hidden, the API refuses anyway.
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((s) => !cancelled && setIsAdmin(s?.isAdmin === true))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   useEffect(() => {
     let cancelled = false;
     async function loadSources() {
@@ -268,12 +280,14 @@ export default function SourcesPage() {
       <Link className="button-secondary mt-4" href="/signals">
         Материалы и извлечение →
       </Link>
-      <AddSourceForm
-        onCreated={(name) => {
-          setMessage(`✓ Источник «${name}» добавлен. Запустите синхронизацию.`);
-          setRevision((value) => value + 1);
-        }}
-      />
+      {isAdmin && (
+        <AddSourceForm
+          onCreated={(name) => {
+            setMessage(`✓ Источник «${name}» добавлен. Запустите синхронизацию.`);
+            setRevision((value) => value + 1);
+          }}
+        />
+      )}
       {message && (
         <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-emerald-400">
           {message}
@@ -314,6 +328,7 @@ export default function SourcesPage() {
               </span>
             </div>
 
+            {isAdmin && (
             <button
               onClick={() => handleSync(source.id)}
               disabled={source.status !== "active" || syncingId === source.id}
@@ -327,7 +342,8 @@ export default function SourcesPage() {
                 ? "Синхронизация..."
                 : "Синхронизировать"}
             </button>
-            {source.status !== "error" && (
+            )}
+            {isAdmin && source.status !== "error" && (
               <button
                 onClick={() => handleToggle(source)}
                 disabled={syncingId === source.id}

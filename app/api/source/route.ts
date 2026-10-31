@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { traceableUrl } from "@/lib/traceability";
@@ -11,6 +12,8 @@ export async function GET() {
   );
 }
 export async function POST(request: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const body = z
     .object({
       name: z.string().trim().min(1).max(120),

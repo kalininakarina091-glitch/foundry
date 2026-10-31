@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { detectPatterns } from "@/lib/patterns";
@@ -8,6 +9,8 @@ import { AI_MODEL } from "@/lib/ai";
 import { findPatternOverlaps } from "@/lib/opportunity-overlap";
 import { toMatchAttributes } from "@/lib/match-fit";
 export async function POST(request: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = z
     .object({ patternId: z.string().min(1).max(200) })
     .safeParse(await request.json().catch(() => null));

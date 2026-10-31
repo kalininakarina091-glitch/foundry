@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import {
@@ -9,6 +10,8 @@ import {
 } from "@/lib/extraction";
 export const maxDuration = 300;
 export async function POST(request: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const body = z
     .object({
       limit: z.number().int().min(1).max(5).default(3),

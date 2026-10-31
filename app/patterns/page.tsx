@@ -4,6 +4,7 @@ import GenerateFromPattern, {
   ExtendFromPattern,
 } from "@/components/generate-from-pattern";
 import { prisma } from "@/lib/db";
+import { currentUser } from "@/lib/auth";
 import { findPatternOverlaps } from "@/lib/opportunity-overlap";
 import {
   clusterMethodLabel,
@@ -14,6 +15,7 @@ import { traceableUrl } from "@/lib/traceability";
 import { EmptyState } from "@/components/product-ui";
 export const dynamic = "force-dynamic";
 export default async function PatternsPage() {
+  const isAdmin = (await currentUser())?.isAdmin === true;
   const [patterns, opportunities] = await Promise.all([
     detectPatterns(),
     prisma.opportunity.findMany({
@@ -122,7 +124,7 @@ export default async function PatternsPage() {
                   </Link>
                   .
                 </p>
-                {overlap.extendable ? (
+                {!isAdmin ? null : overlap.extendable ? (
                   <ExtendFromPattern
                     patternId={p.id}
                     opportunityId={overlap.opportunityId}
@@ -137,7 +139,7 @@ export default async function PatternsPage() {
                 )}
               </div>
             ) : (
-              <GenerateFromPattern patternId={p.id} />
+              isAdmin && <GenerateFromPattern patternId={p.id} />
             )}
           </article>
           );

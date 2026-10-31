@@ -1,6 +1,17 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { traceableUrl } from "../traceability.ts";
+/**
+ * Addresses a public source must not resolve to: loopback, private, link-local,
+ * carrier-grade NAT, benchmark, multicast/reserved and IPv6 local or mapped.
+ */
+export function isPrivateAddress(address: string): boolean {
+  return address.includes(":")
+    ? /^(::|fc|fd|fe[89ab])/i.test(address)
+    : /^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|198\.1[89]\.|22[4-9]\.|2[3-5]\d\.)/.test(
+        address,
+      );
+}
 export async function fetchPublic(url: string): Promise<Response> {
   let target = url;
   for (let i = 0; i < 5; i++) {
@@ -8,16 +19,7 @@ export async function fetchPublic(url: string): Promise<Response> {
     const host = new URL(target).hostname;
     if (isIP(host)) throw new Error("IP source URLs are not supported");
     const addresses = await lookup(host, { all: true });
-    if (
-      !addresses.length ||
-      addresses.some(({ address }) =>
-        address.includes(":")
-          ? /^(::|fc|fd|fe[89ab])/i.test(address)
-          : /^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|22[4-9]\.|23\d\.)/.test(
-              address,
-            ),
-      )
-    )
+    if (!addresses.length || addresses.some(({ address }) => isPrivateAddress(address)))
       throw new Error("Private source address");
     const response = await fetch(target, {
       redirect: "manual",
