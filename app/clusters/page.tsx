@@ -19,7 +19,16 @@ export default async function ClustersPage() {
         Паттерны →
       </Link>
       <div className="mt-5 space-y-4">
-        {!clusters.length && <p>Нет кластеров из независимых материалов.</p>}
+        {!clusters.length && (
+          <p>
+            Кластеров пока нет: нужны хотя бы два похожих сигнала из разных
+            материалов.{" "}
+            <Link className="text-primary" href="/signals">
+              Перейти к сигналам
+            </Link>
+            .
+          </p>
+        )}
         {clusters.map((c) => (
           <article key={c.id} className="foundry-card rounded-xl p-5">
             <h2>{c.name}</h2>

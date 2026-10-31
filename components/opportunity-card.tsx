@@ -18,6 +18,9 @@ export default function OpportunityCard({
   match,
   dismissed,
   onDismiss,
+  compared,
+  onToggleCompare,
+  compareFull,
 }: {
   opportunity: OpportunityView;
   saved: boolean;
@@ -25,6 +28,10 @@ export default function OpportunityCard({
   match?: MatchResult;
   dismissed?: boolean;
   onDismiss?: () => void;
+  compared?: boolean;
+  onToggleCompare?: () => void;
+  /** Three items are already selected; this one cannot be added. */
+  compareFull?: boolean;
 }) {
   const sources = new Set(opportunity.evidence.map((e) => e.sourceId)).size;
   const palette =
@@ -119,6 +126,17 @@ export default function OpportunityCard({
             onClick={onDismiss}
           >
             {dismissed ? "Отменить «Не для меня»" : "Не для меня"}
+          </button>
+        )}
+        {onToggleCompare && (
+          <button
+            className="feedback-button"
+            aria-pressed={compared}
+            disabled={!compared && compareFull}
+            title={!compared && compareFull ? "Можно сравнить не больше трёх" : undefined}
+            onClick={onToggleCompare}
+          >
+            {compared ? "Убрать из сравнения" : "Сравнить"}
           </button>
         )}
         <div className="discovery-card-footer">

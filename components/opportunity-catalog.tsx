@@ -32,6 +32,11 @@ export default function OpportunityCatalog({
   const layout = layoutOverride ?? preferences.catalogLayout;
   const [pagination, setPagination] = useState({ key: "", page: 1 });
   const [error, setError] = useState("");
+  const [compare, setCompare] = useState<string[]>([]);
+  const toggleCompare = (id: string) =>
+    setCompare((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : ids.length < 3 ? [...ids, id] : ids,
+    );
   const [personal, setPersonal] = useState<{
     saved: string[];
     dismissed: string[];
@@ -177,6 +182,27 @@ export default function OpportunityCatalog({
   }
   return (
     <>
+      {compare.length > 0 && (
+        <div
+          role="status"
+          className="foundry-card sticky top-2 z-10 mb-4 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3 text-sm"
+        >
+          <span>Выбрано для сравнения: {compare.length} из 3</span>
+          <Link
+            className={compare.length >= 2 ? "button-primary" : "button-secondary pointer-events-none opacity-50"}
+            aria-disabled={compare.length < 2}
+            href={`/compare?ids=${compare.map(encodeURIComponent).join(",")}`}
+          >
+            Сравнить →
+          </Link>
+          <button className="button-secondary" onClick={() => setCompare([])}>
+            Сбросить
+          </button>
+          {compare.length < 2 && (
+            <span className="text-muted-foreground">Выберите ещё хотя бы одну.</span>
+          )}
+        </div>
+      )}
       <div className="catalog-tabs" aria-label="Группы возможностей">
         {tabs.map((t) => (
           <button
@@ -331,9 +357,31 @@ export default function OpportunityCatalog({
               match={tab === "for-you" ? personal?.matches[o.id] : undefined}
               dismissed={personal?.dismissed.includes(o.id) || false}
               onDismiss={() => action(o, "feedback")}
+              {...(o.demo
+                ? {}
+                : {
+                    compared: compare.includes(o.id),
+                    compareFull: compare.length >= 3,
+                    onToggleCompare: () => toggleCompare(o.id),
+                  })}
             />
           ))}
         </div>
+      ) : opportunities.every((o) => o.demo) ? (
+        <EmptyState
+          title="Возможностей пока нет"
+          description="Возможности появляются из повторяющихся проблем в источниках. Путь: источники → сигналы → паттерны → гипотеза. Автосбор раз в час пополняет материалы сам."
+        >
+          <Link className="button-primary" href="/sources">
+            1. Источники
+          </Link>
+          <Link className="button-secondary" href="/signals">
+            2. Сигналы
+          </Link>
+          <Link className="button-secondary" href="/patterns">
+            3. Паттерны
+          </Link>
+        </EmptyState>
       ) : (
         <EmptyState
           title={tab === "saved" ? "В избранном пока пусто" : "Нет совпадений"}

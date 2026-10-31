@@ -82,7 +82,17 @@ export default async function SignalsPage({
         </h2>
         {!signals.length && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Сигналов пока нет. Запустите извлечение для материалов.
+            {total === 0 ? (
+              <>
+                Материалов пока нет.{" "}
+                <Link className="text-primary" href="/sources">
+                  Добавьте источник и синхронизируйте его
+                </Link>
+                , затем запустите обработку.
+              </>
+            ) : (
+              "Сигналов пока нет. Нажмите «Запустить обработку» — часть материалов окажется без сигнала, это нормально."
+            )}
           </p>
         )}
         <div className="mt-4 space-y-3">
