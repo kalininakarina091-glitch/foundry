@@ -7,8 +7,8 @@ import { normalizeAllSignals } from "@/lib/normalize";
 export const runtime = "nodejs";
 const SYNC_INTERVAL_MS = 24 * 60 * 60000;
 const EXTRACT_PER_RUN = 2;
-// Called hourly by netlify/functions/pipeline-schedule.mts. Each run does one
-// small step so it fits the scheduled-function time limit: sync the most
+// Called hourly by .github/workflows/pipeline-schedule.yml. Each run does one
+// small step so it fits the hosting function time limit: sync the most
 // overdue active source, otherwise extract a couple of pending materials.
 export async function POST(request: Request) {
   const auth = cronAuthorization(
