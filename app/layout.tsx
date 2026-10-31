@@ -18,7 +18,7 @@ export default async function RootLayout({
     <html lang="ru" className="dark">
       <body className="font-sans antialiased">
         <PreferencesProvider key={user?.id || "guest"} user={user}>
-          <AppShell>{children}</AppShell>
+          <AppShell isAdmin={user?.isAdmin === true}>{children}</AppShell>
         </PreferencesProvider>
       </body>
     </html>

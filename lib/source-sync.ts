@@ -31,10 +31,11 @@ export async function syncSource(id: string): Promise<SyncResult> {
         continue;
       }
       const created = await prisma.$transaction(async (tx) => {
+        // A link already imported by any source is the same material: a post
+        // can appear in a community feed and in a phrase search.
         const existing = await tx.rawItem.findFirst({
           where: {
-            sourceId: id,
-            OR: [{ externalId: item.externalId }, { url }],
+            OR: [{ sourceId: id, externalId: item.externalId }, { url }],
           },
         });
         if (existing) return false;

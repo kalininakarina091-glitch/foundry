@@ -77,6 +77,7 @@ export async function proxy(request: NextRequest) {
     !path.startsWith("/api/me") &&
     !path.startsWith("/api/auth/") &&
     path !== "/api/validate" &&
+    path !== "/api/plan" &&
     !user.isAdmin
   )
     return NextResponse.json(

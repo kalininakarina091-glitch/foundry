@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { traceableUrl } from "@/lib/traceability";
 import PipelineActions from "@/components/pipeline-actions";
+import PipelineStatus from "@/components/pipeline-status";
 import { sourceDocument } from "@/lib/source-text";
 import { failureLabel, MAX_EXTRACTION_ATTEMPTS } from "@/lib/ai-errors";
 import { extractionAttempts, readMetadata } from "@/lib/extraction";
@@ -69,6 +70,7 @@ export default async function SignalsPage({
         Извлечение использует исходный текст; нормализация не объединяет
         независимые публикации в дубликаты.
       </p>
+      <PipelineStatus />
       <PipelineActions />
       <Link href="/clusters" className="button-secondary">
         Кластеры →

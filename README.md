@@ -84,6 +84,20 @@ Apply migrations and regenerate Prisma before starting this version. Outside loc
 
 See [accounts architecture and final QA](docs/ACCOUNTS-PERSONALIZATION-QA.md) for the schema, algorithm, checks and remaining limitations. Historical audit reports below describe their original revision.
 
+## End-to-end checks
+
+`npm run e2e` runs real HTTP flows against a running app and a disposable
+database: registration and isolation, saved/feedback/decisions, key pages,
+insufficient-evidence validation without the model, admin-only pipeline,
+scheduled-pipeline secret, login limits, password change, account deletion and
+logout. It seeds and removes its own data and refuses non-local apps and
+databases unless `E2E_ALLOWED_DB_HOST` names a disposable host. CI runs it after
+the build against the PostgreSQL service with no AI key.
+
+```sh
+E2E_BASE_URL=http://localhost:3000 E2E_ALLOW_MUTATIONS=1 npm run e2e
+```
+
 ## Audit and repeatable QA
 
 See [the technical audit](docs/TECHNICAL-AUDIT-2026-09-27.md) and [recorded API checks](docs/audit/e2e-2026-09-27.json).

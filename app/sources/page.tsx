@@ -20,19 +20,33 @@ const SOURCE_TYPES = [
   { value: "github", label: "GitHub" },
   { value: "hackernews", label: "Hacker News (топ)" },
 ] as const;
-// Feeds where people describe their own problems in the post text.
-const PRESETS = [
-  { name: "Ask HN", type: "rss", url: "https://hnrss.org/ask" },
-  { name: "Reddit r/SaaS", type: "rss", url: "https://www.reddit.com/r/SaaS/.rss" },
+// Feeds where people state a need. Search phrases express intent ("is there a
+// tool", "would pay for"), not a topic, so they do not narrow the market.
+const PRESET_GROUPS = [
   {
-    name: "Reddit r/smallbusiness",
-    type: "rss",
-    url: "https://www.reddit.com/r/smallbusiness/.rss",
+    label: "Люди ищут решение",
+    items: [
+      { name: "HN: «is there a tool»", url: "https://hnrss.org/newest?q=%22is+there+a+tool%22" },
+      { name: "HN: «would pay for»", url: "https://hnrss.org/newest?q=%22would+pay+for%22" },
+      {
+        name: "Reddit: «is there a tool»",
+        url: "https://www.reddit.com/search.rss?q=%22is+there+a+tool%22&sort=new&type=link",
+      },
+      {
+        name: "Reddit: «looking for a tool»",
+        url: "https://www.reddit.com/search.rss?q=%22looking+for+a+tool%22&sort=new&type=link",
+      },
+      { name: "Software Recommendations", url: "https://softwarerecs.stackexchange.com/feeds" },
+    ],
   },
   {
-    name: "Reddit r/Entrepreneur",
-    type: "rss",
-    url: "https://www.reddit.com/r/Entrepreneur/.rss",
+    label: "Сообщества",
+    items: [
+      { name: "Ask HN", url: "https://hnrss.org/ask" },
+      { name: "Reddit r/SaaS", url: "https://www.reddit.com/r/SaaS/.rss" },
+      { name: "Reddit r/smallbusiness", url: "https://www.reddit.com/r/smallbusiness/.rss" },
+      { name: "Reddit r/Entrepreneur", url: "https://www.reddit.com/r/Entrepreneur/.rss" },
+    ],
   },
 ] as const;
 const URL_HINTS: Record<string, string> = {
@@ -80,23 +94,25 @@ function AddSourceForm({ onCreated }: { onCreated: (name: string) => void }) {
   return (
     <form onSubmit={submit} className="foundry-card mt-6 max-w-2xl space-y-4 rounded-2xl p-5">
       <h2 className="font-semibold text-white">Новый источник</h2>
-      <div className="flex flex-wrap gap-2">
-        <span className="text-xs text-neutral-500">Шаблоны:</span>
-        {PRESETS.map((p) => (
-          <button
-            key={p.url}
-            type="button"
-            className="rounded-full border border-neutral-700 px-3 py-1 text-xs text-neutral-300 hover:border-neutral-500"
-            onClick={() => {
-              setName(p.name);
-              setType(p.type);
-              setUrl(p.url);
-            }}
-          >
-            {p.name}
-          </button>
-        ))}
-      </div>
+      {PRESET_GROUPS.map((group) => (
+        <div key={group.label} className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-neutral-500">{group.label}:</span>
+          {group.items.map((preset) => (
+            <button
+              key={preset.url}
+              type="button"
+              className="rounded-full border border-neutral-700 px-3 py-1 text-xs text-neutral-300 hover:border-neutral-500"
+              onClick={() => {
+                setName(preset.name);
+                setType("rss");
+                setUrl(preset.url);
+              }}
+            >
+              {preset.name}
+            </button>
+          ))}
+        </div>
+      ))}
       <label className="block text-sm">
         <span className="text-neutral-400">Название</span>
         <input

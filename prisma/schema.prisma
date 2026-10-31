@@ -91,6 +91,7 @@ model Opportunity {
   savedBy SavedOpportunity[]
   feedback OpportunityFeedback[]
   decisions OpportunityDecision[]
+  plans OpportunityPlan[]
   id           String    @id @default(cuid())
   title        String
   description  String?
@@ -118,6 +119,7 @@ model User {
   saved SavedOpportunity[]
   feedback OpportunityFeedback[]
   decisions OpportunityDecision[]
+  plans OpportunityPlan[]
   validations ValidationRun[]
 }
 // One model-backed validation of an opportunity. The report and the exact
@@ -197,6 +199,19 @@ model OpportunityDecision {
   updatedAt DateTime @updatedAt
   @@id([userId, opportunityId])
   @@index([userId, status])
+}
+// Business Builder: a validation plan generated for one user (it reflects
+// their profile). Kept as history; never changes market data or scores.
+model OpportunityPlan {
+  id String @id @default(cuid())
+  userId String
+  opportunityId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  model String
+  content String
+  createdAt DateTime @default(now())
+  @@index([userId, opportunityId, createdAt])
 }
 model AuthThrottle {
   key String @id
