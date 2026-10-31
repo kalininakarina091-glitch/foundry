@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth-crypto";
 import { allowAuthAttempt, createSession } from "@/lib/auth";
+import { passwordSchema } from "@/lib/account";
 const schema = z
   .object({
     name: z.string().trim().min(1).max(80),
@@ -12,7 +13,7 @@ const schema = z
       .email()
       .max(254)
       .transform((s) => s.toLowerCase()),
-    password: z.string().min(12).max(128),
+    password: passwordSchema,
   })
   .strict();
 export async function POST(request: Request) {

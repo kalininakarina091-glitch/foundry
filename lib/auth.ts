@@ -51,6 +51,19 @@ export async function createSession(userId: string, request: Request) {
     expires: expiresAt,
   });
 }
+/** Digest of the request's session token, to tell "this device" apart. */
+export async function currentSessionDigest(): Promise<string | null> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  return token ? tokenDigest(token) : null;
+}
+/** Ends every session of the user except the one making the request. */
+export async function endOtherSessions(userId: string) {
+  const current = await currentSessionDigest();
+  const { count } = await prisma.session.deleteMany({
+    where: { userId, ...(current ? { NOT: { tokenHash: current } } : {}) },
+  });
+  return count;
+}
 export async function endSession() {
   const jar = await cookies(),
     token = jar.get(SESSION_COOKIE)?.value;
