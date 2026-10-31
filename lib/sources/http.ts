@@ -1,6 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
-import { traceableUrl } from "@/lib/traceability";
+import { traceableUrl } from "../traceability.ts";
 export async function fetchPublic(url: string): Promise<Response> {
   let target = url;
   for (let i = 0; i < 5; i++) {
