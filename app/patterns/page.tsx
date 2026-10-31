@@ -11,6 +11,7 @@ import {
   signalTypeLabel,
 } from "@/lib/labels";
 import { traceableUrl } from "@/lib/traceability";
+import { EmptyState } from "@/components/product-ui";
 export const dynamic = "force-dynamic";
 export default async function PatternsPage() {
   const [patterns, opportunities] = await Promise.all([
@@ -20,6 +21,10 @@ export default async function PatternsPage() {
       select: { id: true, title: true, provenance: true },
     }),
   ]);
+  // Clusterable signals: normalized, not duplicates (see lib/cluster).
+  const signalCount = await prisma.signal.count({
+    where: { duplicateOf: null, normalizedProblem: { not: null } },
+  });
   const overlapOf = (signalIds: string[]) =>
     findPatternOverlaps(signalIds, opportunities)[0];
   const members = new Map(
@@ -38,10 +43,21 @@ export default async function PatternsPage() {
         эвристика, не доказательство спроса или роста.
       </p>
       {!patterns.length && (
-        <p>
-          Паттерны не найдены. Нужны минимум два нормализованных сигнала из
-          разных материалов.
-        </p>
+        <EmptyState
+          title="Паттернов пока нет"
+          description={
+            signalCount < 2
+              ? `Сигналов для группировки: ${signalCount}. Паттерн появляется, когда хотя бы два сигнала из разных материалов описывают одну проблему — извлеките сигналы из новых материалов.`
+              : `Сигналов для группировки: ${signalCount}, но среди них нет двух про одну и ту же проблему. Нужно больше материалов: добавьте источники, где люди описывают свои проблемы, или дождитесь автосбора.`
+          }
+        >
+          <Link className="button-primary" href="/signals">
+            К сигналам
+          </Link>
+          <Link className="button-secondary" href="/sources">
+            Источники
+          </Link>
+        </EmptyState>
       )}
       <div className="space-y-4">
         {patterns.map((p) => {
