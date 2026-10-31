@@ -1,5 +1,7 @@
 # Accounts and personalization: architecture and final QA
 
+> **Historical report.** It describes the project at the date below; see [README](../README.md) for the current state.
+
 Final verification: 2026-10-03. Branch: `feat/accounts-personalization`, based on the full pipeline audit in PR #4. The PR to main includes the unmerged predecessor changes. No merge into main is performed.
 
 ## What changed

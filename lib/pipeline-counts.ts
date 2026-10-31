@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { EMBEDDING_MODEL } from "@/lib/embeddings";
-import type { PipelineCounts } from "@/lib/pipeline-health";
+import { pipelineHints, type PipelineCounts } from "@/lib/pipeline-health";
 /** Counters for the pipeline status panel and the dashboard admin hint. */
 export async function pipelineCounts() {
   const clusterable = { duplicateOf: null, normalizedProblem: { not: null } } as const;
@@ -32,4 +32,28 @@ export async function pipelineCounts() {
     lastExtractAt: lastExtract._max.extractedAt,
   };
   return { counts, byStatus, opportunities };
+}
+/**
+ * Number of warning-level pipeline hints from three cheap queries, for the
+ * dashboard. Warnings depend only on sources, failures, sync time and the AI
+ * key; the full counters stay on /signals.
+ */
+export async function pipelineWarningCount() {
+  const [activeSources, failed, lastSync] = await Promise.all([
+    prisma.source.count({ where: { status: "active" } }),
+    prisma.rawItem.count({ where: { extractionStatus: "failed" } }),
+    prisma.source.aggregate({ _max: { lastSyncedAt: true } }),
+  ]);
+  return pipelineHints({
+    activeSources,
+    failed,
+    pending: 0,
+    signals: 0,
+    normalizedSignals: 0,
+    clusterableSignals: 0,
+    embeddedSignals: 0,
+    aiConfigured: Boolean(process.env.OPENROUTER_API_KEY),
+    lastSyncAt: lastSync._max.lastSyncedAt,
+    lastExtractAt: null,
+  }).filter((h) => h.level === "warn").length;
 }

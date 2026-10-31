@@ -11,8 +11,7 @@ import { currentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { completeProfile, decodeProfile } from "@/lib/personal-profile";
 import { nextActions } from "@/lib/next-actions";
-import { pipelineCounts } from "@/lib/pipeline-counts";
-import { pipelineHints } from "@/lib/pipeline-health";
+import { pipelineWarningCount } from "@/lib/pipeline-counts";
 import { DemoNotice } from "@/components/product-ui";
 import OpportunityWorkspace from "@/components/opportunity-workspace";
 export const dynamic = "force-dynamic";
@@ -143,7 +142,7 @@ async function actionsFor(
       where: { userId: user.id },
       select: { opportunityId: true },
     }),
-    user.isAdmin ? pipelineCounts() : null,
+    user.isAdmin ? pipelineWarningCount() : null,
   ]);
   return nextActions({
     opportunities: opportunities.map((o) => ({
@@ -156,8 +155,6 @@ async function actionsFor(
     planned: new Set(plans.map((p) => p.opportunityId)),
     dismissed: new Set(feedback.map((f) => f.opportunityId)),
     profileComplete: completeProfile(decodeProfile(profile)),
-    adminWarnings: pipeline
-      ? pipelineHints(pipeline.counts).filter((h) => h.level === "warn").length
-      : null,
+    adminWarnings: pipeline,
   });
 }

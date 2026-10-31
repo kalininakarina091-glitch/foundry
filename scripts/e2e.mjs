@@ -156,6 +156,7 @@ try {
   await step("anonymous: private API 401, pages redirect, cross-site POST 403", async () => {
     assert.equal((await http("/api/me/profile")).status, 401);
     assert.equal((await http("/dashboard")).status, 307);
+    assert.match((await http("/")).text, /Сигнал ≠ возможность/);
     assert.equal((await http("/api/auth/login", { method: "POST", body: {}, origin: "https://evil.example.com" })).status, 403);
   });
   await step("registration: two accounts, safe cookie, duplicate refused", async () => {
@@ -218,6 +219,36 @@ try {
     if (process.env.CRON_SECRET) {
       const r = await fetch(base + "/api/cron/pipeline", { method: "POST", headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } });
       assert.equal(r.status, 200, await r.text());
+    }
+  });
+  await step("data export: own data only, no password or token hashes", async () => {
+    const r = await http("/api/me/export", { cookie: A.cookie });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.account.email, A.email);
+    assert.equal(r.json.decisions[0].opportunity.id, opp1.id);
+    assert.doesNotMatch(r.text, /passwordHash|tokenHash|scrypt-v1/);
+    assert.equal((await http("/api/me/export")).status, 401);
+  });
+  await step("administrator rights: only admins grant them; the last admin stays", async () => {
+    const bId = (await prisma.user.findUnique({ where: { email: B.email } })).id;
+    const aId = (await prisma.user.findUnique({ where: { email: A.email } })).id;
+    assert.equal((await http(`/api/admin/users/${bId}`, { method: "PATCH", cookie: A.cookie, body: { isAdmin: true } })).status, 403);
+    // Streaming starts before the check (app/loading.tsx), so the status may be
+    // 200; what matters is that no admin content or emails are rendered.
+    const denied = await http("/admin/users", { cookie: A.cookie });
+    assert.doesNotMatch(denied.text, /Администрирование/);
+    assert.ok(!denied.text.includes(B.email), "another user's email must not be shown");
+    const others = await prisma.user.findMany({ where: { isAdmin: true }, select: { id: true } });
+    await prisma.user.updateMany({ where: { isAdmin: true }, data: { isAdmin: false } });
+    try {
+      await prisma.user.update({ where: { id: aId }, data: { isAdmin: true } });
+      assert.equal((await http(`/api/admin/users/${aId}`, { method: "PATCH", cookie: A.cookie, body: { isAdmin: false } })).status, 409);
+      assert.equal((await http(`/api/admin/users/${bId}`, { method: "PATCH", cookie: A.cookie, body: { isAdmin: true } })).status, 200);
+      assert.match((await http("/admin/users", { cookie: A.cookie })).text, /Пользователи/);
+      assert.equal((await http(`/api/admin/users/${aId}`, { method: "PATCH", cookie: A.cookie, body: { isAdmin: false } })).status, 200);
+    } finally {
+      await prisma.user.updateMany({ where: { id: { in: [aId, bId] } }, data: { isAdmin: false } });
+      await prisma.user.updateMany({ where: { id: { in: others.map((o) => o.id) } }, data: { isAdmin: true } });
     }
   });
   await step("login: wrong password 401, per-email limit 429 does not lock other accounts", async () => {

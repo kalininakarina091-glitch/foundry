@@ -8,3 +8,5 @@ export const DELETE_CONFIRMATION = "удалить";
 export function deletionBlocked(isAdmin: boolean, adminCount: number): boolean {
   return isAdmin && adminCount <= 1;
 }
+/** Same rule for removing admin rights: someone must keep running the pipeline. */
+export const demotionBlocked = deletionBlocked;

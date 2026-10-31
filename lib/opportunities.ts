@@ -12,7 +12,11 @@ import type { OpportunityView } from "@/lib/opportunity-types";
 const opportunityInclude = {
   evidence: {
     include: {
-      signal: { include: { rawItem: { include: { source: true } } } },
+      // Embedding vectors (~15 KB each) are only needed for clustering.
+      signal: {
+        omit: { embedding: true },
+        include: { rawItem: { include: { source: true } } },
+      },
     },
   },
   validations: {

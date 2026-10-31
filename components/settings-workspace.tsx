@@ -111,6 +111,14 @@ export default function SettingsWorkspace({
           <Panel title="Активные сессии" description="Где выполнен вход в ваш аккаунт. Данные об устройствах не собираются.">
             <SessionsPanel />
           </Panel>
+          <Panel title="Мои данные" description="Профиль, настройки, избранное, решения, заметки и планы одним файлом.">
+            <p className="text-sm text-muted-foreground">
+              Файл JSON. Пароли и токены сессий в него не входят.
+            </p>
+            <a className="button-secondary mt-3 inline-flex" href="/api/me/export" download>
+              Скачать мои данные
+            </a>
+          </Panel>
           <Panel title="Удаление аккаунта" description="Необратимое удаление личных данных.">
             <DeleteAccountPanel />
           </Panel>
