@@ -86,6 +86,14 @@ export default async function OpportunityDetailPage({
         >
           Проверить возможность →
         </Link>
+        {!demo && (
+          <Link
+            href={`/plan/${encodeURIComponent(id)}`}
+            className="button-secondary"
+          >
+            План проверки →
+          </Link>
+        )}
         <p className="text-xs leading-5 text-muted-foreground">
           Оценка возможности — предварительная. Уверенность проверки появится
           в результате проверки.
@@ -125,7 +133,9 @@ export default async function OpportunityDetailPage({
             {opportunity.evidence.length ? (
               <div className="space-y-3">
                 {opportunity.evidence.map((e) => (
-                  <EvidenceCard key={e.id} evidence={e} />
+                  <div key={e.id} id={`evidence-${e.id}`} className="scroll-mt-5">
+                    <EvidenceCard evidence={e} />
+                  </div>
                 ))}
               </div>
             ) : (
