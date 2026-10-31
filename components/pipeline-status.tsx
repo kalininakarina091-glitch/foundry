@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db";
 import { AI_MODEL } from "@/lib/ai";
 import { EMBEDDING_MODEL } from "@/lib/embeddings";
 import { pipelineHints } from "@/lib/pipeline-health";
+import { pipelineCounts } from "@/lib/pipeline-counts";
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -10,34 +10,8 @@ const dateFormat = new Intl.DateTimeFormat("ru-RU", {
 // Operational overview: counters, models, last activity and next steps.
 // Shows configuration as yes/no only, never values of keys.
 export default async function PipelineStatus() {
-  const clusterable = { duplicateOf: null, normalizedProblem: { not: null } } as const;
-  const [activeSources, statuses, signals, normalizedSignals, clusterableSignals, embeddedSignals, lastSync, lastExtract, opportunities] =
-    await Promise.all([
-      prisma.source.count({ where: { status: "active" } }),
-      prisma.rawItem.groupBy({ by: ["extractionStatus"], _count: true }),
-      prisma.signal.count(),
-      prisma.signal.count({ where: { normalizedProblem: { not: null } } }),
-      prisma.signal.count({ where: clusterable }),
-      prisma.signal.count({
-        where: { ...clusterable, embedding: { contains: `"model":${JSON.stringify(EMBEDDING_MODEL)}` } },
-      }),
-      prisma.source.aggregate({ _max: { lastSyncedAt: true } }),
-      prisma.rawItem.aggregate({ _max: { extractedAt: true } }),
-      prisma.opportunity.count({ where: { provenance: { not: null } } }),
-    ]);
-  const by = (s: string) => statuses.find((x) => x.extractionStatus === s)?._count ?? 0;
-  const counts = {
-    activeSources,
-    pending: by("pending"),
-    failed: by("failed"),
-    signals,
-    normalizedSignals,
-    clusterableSignals,
-    embeddedSignals,
-    aiConfigured: Boolean(process.env.OPENROUTER_API_KEY),
-    lastSyncAt: lastSync._max.lastSyncedAt,
-    lastExtractAt: lastExtract._max.extractedAt,
-  };
+  const { counts, byStatus: by, opportunities } = await pipelineCounts();
+  const { activeSources, signals, clusterableSignals, embeddedSignals } = counts;
   const hints = pipelineHints(counts);
   const when = (d: Date | null) => (d ? dateFormat.format(d) : "ещё не было");
   return (

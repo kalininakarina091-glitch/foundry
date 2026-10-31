@@ -6,6 +6,13 @@ import {
   Layers3,
 } from "lucide-react";
 import { listOpportunities } from "@/lib/opportunities";
+import type { OpportunityView } from "@/lib/opportunity-types";
+import { currentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { completeProfile, decodeProfile } from "@/lib/personal-profile";
+import { nextActions } from "@/lib/next-actions";
+import { pipelineCounts } from "@/lib/pipeline-counts";
+import { pipelineHints } from "@/lib/pipeline-health";
 import { DemoNotice } from "@/components/product-ui";
 import OpportunityWorkspace from "@/components/opportunity-workspace";
 export const dynamic = "force-dynamic";
@@ -16,6 +23,8 @@ export default async function DashboardPage({
 }) {
   const demo = (await searchParams).mode === "demo";
   const opportunities = await listOpportunities(demo);
+  const user = demo ? null : await currentUser();
+  const actions = user ? await actionsFor(user, opportunities) : [];
   const evidence = new Map(
     opportunities.flatMap((o) => o.evidence).map((e) => [e.signalId, e]),
   );
@@ -84,6 +93,26 @@ export default async function DashboardPage({
           </div>
         ))}
       </div>
+      {actions.length > 0 && (
+        <section className="foundry-card mb-6 rounded-2xl p-5" aria-labelledby="next-actions">
+          <h2 id="next-actions" className="text-lg font-semibold">
+            Что делать дальше
+          </h2>
+          <ol className="mt-3 grid gap-3 md:grid-cols-2">
+            {actions.map((a) => (
+              <li key={a.href}>
+                <Link
+                  href={a.href}
+                  className="block h-full rounded-xl border border-border p-4 hover:border-primary/40"
+                >
+                  <span className="font-medium">{a.title} →</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{a.detail}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       <OpportunityWorkspace opportunities={opportunities} />
       <p className="dashboard-footnote">
         Оценка возможности учитывает доказательства, выраженность спроса,
@@ -93,4 +122,42 @@ export default async function DashboardPage({
       </p>
     </div>
   );
+}
+
+async function actionsFor(
+  user: { id: string; isAdmin: boolean },
+  opportunities: OpportunityView[],
+) {
+  const [profile, decisions, plans, feedback, pipeline] = await Promise.all([
+    prisma.userProfile.findUnique({ where: { userId: user.id } }),
+    prisma.opportunityDecision.findMany({
+      where: { userId: user.id, status: { not: null } },
+      select: { opportunityId: true, status: true },
+    }),
+    prisma.opportunityPlan.findMany({
+      where: { userId: user.id },
+      distinct: ["opportunityId"],
+      select: { opportunityId: true },
+    }),
+    prisma.opportunityFeedback.findMany({
+      where: { userId: user.id },
+      select: { opportunityId: true },
+    }),
+    user.isAdmin ? pipelineCounts() : null,
+  ]);
+  return nextActions({
+    opportunities: opportunities.map((o) => ({
+      id: o.id,
+      title: o.title,
+      score: o.score,
+      validated: Boolean(o.validation),
+    })),
+    decisions: Object.fromEntries(decisions.map((x) => [x.opportunityId, x.status!])),
+    planned: new Set(plans.map((p) => p.opportunityId)),
+    dismissed: new Set(feedback.map((f) => f.opportunityId)),
+    profileComplete: completeProfile(decodeProfile(profile)),
+    adminWarnings: pipeline
+      ? pipelineHints(pipeline.counts).filter((h) => h.level === "warn").length
+      : null,
+  });
 }
