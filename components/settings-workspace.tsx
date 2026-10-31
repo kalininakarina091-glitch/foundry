@@ -25,6 +25,11 @@ import {
 import { usePreferences, savePreferences } from "@/lib/use-preferences";
 import type { Preferences } from "@/lib/preferences";
 import { sourceTypeLabel } from "@/lib/labels";
+import {
+  DeleteAccountPanel,
+  PasswordPanel,
+  SessionsPanel,
+} from "@/components/account-security";
 type Source = {
   id: string;
   name: string;
@@ -34,6 +39,7 @@ type Source = {
 };
 const tabs = [
   { id: "general", label: "Основные", icon: Settings2 },
+  { id: "security", label: "Безопасность", icon: ShieldCheck },
   { id: "sources", label: "Источники данных", icon: Database },
   { id: "notifications", label: "Уведомления", icon: Bell },
   { id: "appearance", label: "Внешний вид", icon: Palette },
@@ -95,6 +101,19 @@ export default function SettingsWorkspace({
           <PreferencesPanel preferences={preferences} onSave={save} />
           <Notifications />
           <Sources sources={sources} />
+        </div>
+      )}
+      {tab === "security" && (
+        <div className="settings-grid">
+          <Panel title="Пароль" description="После смены пароля выполняется выход на других устройствах.">
+            <PasswordPanel />
+          </Panel>
+          <Panel title="Активные сессии" description="Где выполнен вход в ваш аккаунт. Данные об устройствах не собираются.">
+            <SessionsPanel />
+          </Panel>
+          <Panel title="Удаление аккаунта" description="Необратимое удаление личных данных.">
+            <DeleteAccountPanel />
+          </Panel>
         </div>
       )}
       {tab === "sources" && (
