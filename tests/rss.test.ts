@@ -31,3 +31,11 @@ test("snippet wins over raw content; missing fields stay empty; at most 15 items
   assert.equal(b.publishedAt, null);
   assert.equal(feedItems(Array.from({ length: 20 }, (_, i) => ({ link: `https://a.example.org/${i}` })), feed).length, 15);
 });
+
+test("sources cannot resolve to internal or reserved addresses", async () => {
+  const { isPrivateAddress } = await import("../lib/sources/http.ts");
+  for (const a of ["127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1", "100.127.255.1", "198.18.0.1", "0.0.0.0", "224.0.0.1", "255.255.255.255", "::1", "::ffff:10.0.0.1", "fd00::1", "fe80::1"])
+    assert.equal(isPrivateAddress(a), true, a);
+  for (const a of ["93.184.216.34", "100.63.0.1", "100.128.0.1", "172.32.0.1", "198.20.0.1", "2606:4700::1111"])
+    assert.equal(isPrivateAddress(a), false, a);
+});

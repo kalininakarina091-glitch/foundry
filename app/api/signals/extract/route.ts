@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 import { extractRawItem } from "@/lib/extraction";
 export async function POST(request: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const body = z
     .object({ rawItemId: z.string().min(1).max(200) })
     .safeParse(await request.json().catch(() => null));

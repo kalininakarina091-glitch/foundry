@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await params;
   if (!(await prisma.opportunity.findUnique({ where: { id } })))
     return NextResponse.json(

@@ -74,7 +74,9 @@ export async function proxy(request: NextRequest) {
   if (
     mutation &&
     path.startsWith("/api/") &&
-    !path.startsWith("/api/me") &&
+    // Exact personal namespace: "/api/metrics" must not count as personal.
+    path !== "/api/me" &&
+    !path.startsWith("/api/me/") &&
     !path.startsWith("/api/auth/") &&
     path !== "/api/validate" &&
     path !== "/api/plan" &&

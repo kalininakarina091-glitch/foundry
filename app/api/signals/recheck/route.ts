@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { extractSignals, AI_MODEL } from "@/lib/ai";
@@ -15,6 +16,8 @@ const needsRecheck = (metadata: string | null) => {
   return !extraction?.materialKind && !extraction?.recheck;
 };
 export async function POST(request: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const body = z
     .object({ limit: z.number().int().min(1).max(5).default(3) })
     .safeParse(await request.json().catch(() => ({})));

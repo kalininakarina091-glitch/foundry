@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 // Admin-only through proxy. A disabled source keeps its materials and
@@ -7,6 +8,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await params;
   const body = z
     .object({ status: z.enum(["active", "disabled"]) })

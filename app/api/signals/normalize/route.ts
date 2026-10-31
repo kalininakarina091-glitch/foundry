@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { normalizeAllSignals } from "@/lib/normalize";
 
 export async function POST() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
     const result = await normalizeAllSignals();
     return NextResponse.json(result);

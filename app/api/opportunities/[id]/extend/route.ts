@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { detectPatterns } from "@/lib/patterns";
@@ -13,6 +14,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await params;
   const body = z
     .object({ patternId: z.string().min(1).max(200) })

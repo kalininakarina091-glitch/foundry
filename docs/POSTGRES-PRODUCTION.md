@@ -31,7 +31,7 @@ references, quotes and URLs. Existing legacy opportunities without provenance
 are retained and reported, not promoted to supported evidence.
 
 `lib/db.ts` shares one PrismaClient and pool per warm process, including production.
-Runtime URL uses `connection_limit=2` and `pool_timeout=10` unless explicitly set.
+Runtime URL uses `connection_limit=5` (2 before 2026-10-31) and `pool_timeout=10` unless explicitly set.
 These are per-process limits: use the provider's transaction pooler for serverless
 concurrency and tune based on measured load and database plan. No client is
 created per request and no disconnect occurs per request. Cold starts and pooler

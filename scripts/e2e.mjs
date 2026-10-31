@@ -192,7 +192,12 @@ try {
     assert.match(page.text, /Моё решение/);
     assert.match((await http(`/compare?ids=${opp1.id},${opp2.id}`, { cookie: A.cookie })).text, /Сравнение возможностей/);
     assert.match((await http(`/plan/${opp1.id}`, { cookie: A.cookie })).text, /Плана пока нет/);
-    assert.match((await http("/signals", { cookie: A.cookie })).text, /Состояние pipeline/);
+    const signalsPage = (await http("/signals", { cookie: A.cookie })).text;
+    assert.doesNotMatch(signalsPage, /Запустить обработку|Состояние pipeline/);
+    assert.match(signalsPage, /Обработкой материалов управляют администраторы/);
+    const score = (await http(`/api/opportunities/${opp1.id}/score`, { cookie: A.cookie })).json;
+    assert.equal(score.method, "opportunity-score-v2");
+    assert.equal(score.materials, 2);
     assert.match((await http("/dashboard", { cookie: A.cookie })).text, /Что делать дальше/);
   });
   await step("validation with two materials is «insufficient» without calling the model", async () => {
@@ -211,6 +216,7 @@ try {
     await prisma.user.update({ where: { email: A.email }, data: { isAdmin: true } });
     const r = await http("/api/signals/normalize", { method: "POST", cookie: A.cookie, body: {} });
     assert.equal(r.status, 200, r.text);
+    assert.match((await http("/signals", { cookie: A.cookie })).text, /Состояние pipeline/);
     await prisma.user.update({ where: { email: A.email }, data: { isAdmin: false } });
   });
   await step("scheduled pipeline endpoint requires the secret", async () => {
