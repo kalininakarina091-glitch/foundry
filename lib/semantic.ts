@@ -1,8 +1,18 @@
 // Embedding vectors of signal grouping phrases, stored in Signal.embedding as
 // JSON {model, v}. Vectors from different models are never compared.
-// Calibrated on 2026-10-22 with openai/text-embedding-3-small and task-only
-// phrases: same problem 0.52-0.74, different problems <= 0.43.
+// Cosine thresholds differ between embedding models, so each is calibrated on
+// the same task-only phrases (2026-10-22):
+// - openai/text-embedding-3-small: same problem 0.52-0.74, different <= 0.43
+// - nvidia/nemotron-3.5-embed-1b:free: same problem 0.49-0.68, different <= 0.26
+// Uncalibrated models use the stricter default.
 export const SEMANTIC_THRESHOLD = 0.5;
+const CALIBRATED: Record<string, number> = {
+  "openai/text-embedding-3-small": 0.5,
+  "nvidia/nemotron-3.5-embed-1b:free": 0.4,
+};
+export function semanticThreshold(model: string): number {
+  return Object.hasOwn(CALIBRATED, model) ? CALIBRATED[model] : SEMANTIC_THRESHOLD;
+}
 export const LEXICAL_THRESHOLD = 0.28;
 export interface StoredEmbedding {
   model: string;

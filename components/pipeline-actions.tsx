@@ -2,7 +2,11 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { failureLabel, MAX_EXTRACTION_ATTEMPTS } from "@/lib/ai-errors";
+import {
+  failureLabel,
+  isProviderSide,
+  MAX_EXTRACTION_ATTEMPTS,
+} from "@/lib/ai-errors";
 // Each request handles a few items so it stays within the hosting function
 // time limit; a full run is a sequence of short requests.
 const BATCH = 3;
@@ -70,7 +74,11 @@ const extractJob = (retryFailed = false): Job => ({
         errors: d.errors,
       },
       failures: d.failures || {},
-      more: d.processed >= BATCH,
+      // Stop on limits, credits or outages: the material is back in the
+      // queue and would just be retried against the same refusal.
+      more:
+        d.processed >= BATCH &&
+        !Object.keys(d.failures || {}).some(isProviderSide),
     };
   },
   summary: (c) =>

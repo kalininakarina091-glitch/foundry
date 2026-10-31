@@ -4,7 +4,7 @@ import {
   cosine,
   decodeEmbedding,
   LEXICAL_THRESHOLD,
-  SEMANTIC_THRESHOLD,
+  semanticThreshold,
 } from "./semantic.ts";
 export { traceableUrl } from "./source-url.ts";
 import { createHash } from "node:crypto";
@@ -128,7 +128,11 @@ export function pairMatch(a: PipelineSignal, b: PipelineSignal) {
     eb = decodeEmbedding(b.embedding);
   if (ea && eb && ea.model === eb.model) {
     const score = cosine(ea.v, eb.v);
-    return { method: "semantic" as const, score, linked: score >= SEMANTIC_THRESHOLD };
+    return {
+      method: "semantic" as const,
+      score,
+      linked: score >= semanticThreshold(ea.model),
+    };
   }
   const score = similarity(a.normalizedProblem || "", b.normalizedProblem || "");
   return { method: "lexical" as const, score, linked: score >= LEXICAL_THRESHOLD };

@@ -30,6 +30,7 @@ export async function POST(request: Request) {
         .parse(
           await generateJSON(
             `Estimate what one founder needs to build a first version of this product idea. Use only the description; return null for anything unclear. Return JSON with ${FIT_PROMPT}. Idea: ${JSON.stringify({ title: o.title, problem: o.description, research: o.research?.slice(0, 3000) })}`,
+            800,
           ),
         );
       await prisma.opportunity.update({
