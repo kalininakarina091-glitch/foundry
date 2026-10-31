@@ -1,5 +1,7 @@
 # Технический аудит Foundry — 27 сентября 2026
 
+> **Historical report.** It describes the project at the date below; see [README](../README.md) for the current state.
+
 ## Область и база проверки
 
 Работа продолжена от полной версии `feat/settings-design` (GitHub commit `0bd26dd5b98daef364ccc3d4b3a1be9129ecd7a3`, PR #3). Исправления находятся в отдельной ветке `fix/pipeline-traceability-audit`. `main` не изменялся и не сливался; его SHA на момент проверки — `1a4f794acf77bb3fffd86968efc2813e8def9ec7`. Поскольку #3 и предшествующие PR ещё открыты, новый PR в main также содержит их изменения. Собственный diff аудита следует сравнивать с `feat/settings-design`.

@@ -11,6 +11,7 @@ import {
   Rss,
   Radar,
   Network,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 interface Item {
@@ -42,6 +43,7 @@ const data: Item[] = [
   { href: "/sources", label: "Источники", icon: Rss, active: (p) => p === "/sources" },
   { href: "/signals", label: "Сигналы", icon: Radar, active: (p) => p === "/signals" || p === "/clusters" },
   { href: "/patterns", label: "Паттерны", icon: Network, active: (p) => p === "/patterns" },
+  { href: "/admin/users", label: "Пользователи", icon: Users, active: (p) => p.startsWith("/admin") },
 ];
 function Links({ items, path, view }: { items: Item[]; path: string; view: string | null }) {
   return items.map(({ href, label, icon: Icon, active }) => {

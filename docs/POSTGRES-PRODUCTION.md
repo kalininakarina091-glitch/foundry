@@ -1,5 +1,7 @@
 # PostgreSQL readiness and release procedure
 
+> **Status 2026-10-31:** production and deploy previews run on separate Neon branches; migrations are applied with `npm run db:migrate` to each branch before deploying. The SQLite import procedure below is still valid; statements that no database exists describe the original release.
+
 Prepared from PR #5 / `d91d21c` on `feat/postgres-production`. Main is unchanged;
 no production database, provider account, paid plan or external migration was
 created. Code readiness and local PostgreSQL QA are verified. Permanent Netlify

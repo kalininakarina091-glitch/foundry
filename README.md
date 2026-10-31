@@ -1,122 +1,136 @@
 # Foundry
 
-Evidence-first workspace for discovering and validating business opportunities.
-Built with Next.js App Router, React, Tailwind CSS and Prisma 6 / PostgreSQL.
+Evidence-first workspace for finding and validating business opportunities.
+Foundry collects public posts where people describe a problem or look for a
+solution, extracts signals with exact quotes, groups recurring problems, forms
+opportunity hypotheses and validates them against evidence. Principle: **a
+signal is not an opportunity** — with too little evidence Foundry says so.
+
+Next.js (App Router) · React · TypeScript · Tailwind CSS · Prisma 6 ·
+PostgreSQL (Neon) · Netlify · OpenRouter (language models and embeddings) ·
+GitHub Actions (checks and the hourly pipeline).
+
+## Product
+
+User path: **Discover → Understand → Validate → Decide**, in Russian UI.
+
+| Page | Purpose |
+| --- | --- |
+| `/` | Public landing; signed-in users go to the dashboard |
+| `/dashboard` | Counts, «Что делать дальше» (next steps from the user's decisions, plans and profile), opportunity table |
+| `/opportunities` | Catalog: «Для вас» (Match Score), all, saved, «Мои решения»; compare up to three |
+| `/opportunities/:id` | Problem, customer, evidence with sources and quotes, score breakdown, «Моё решение» |
+| `/validation/:id` | Model-backed validation with history; insufficient evidence is answered without the model |
+| `/plan/:id` | Business Builder: personal plan to test an opportunity cheaply |
+| `/compare?ids=` | Side-by-side comparison; scores stay separate |
+| `/settings` | Profile, preferences, «Безопасность» (password, sessions, data export, account deletion) |
+| `/sources`, `/signals`, `/patterns` | Pipeline tools and status — administrators |
+| `/admin/users` | Accounts and administrator rights — administrators |
+
+### Three scores that are never mixed
+
+- **Opportunity Score** (`lib/opportunity-score.ts`): evidence (35), demand (25),
+  recency (15), stated spending (25). A dimension without data is excluded, not
+  zero; coverage shows how much was measured. Competitors and market size are
+  not scored — there is no verifiable data. Same for every user.
+- **Validation Confidence** (`lib/validation.ts`): how well evidence supports the
+  verdict, not a probability of success. BUILD requires at least three
+  materials from two sources and two hosts among positively cited evidence.
+- **Match Score** (`lib/personalization.ts`): deterministic fit to the user's
+  profile; unknown factors are listed, not counted as a match. Personal, never
+  changes market data.
+
+### Pipeline
+
+Source → RawItem → Signal → Normalize → Cluster/Pattern → Opportunity → Evidence → Validation.
+
+- Connectors: RSS/Atom (incl. phrase searches on Hacker News and Reddit,
+  Stack Exchange), GitHub issues, Hacker News top. A link already imported by
+  any source is skipped.
+- Extraction (`lib/ai.ts`, `lib/signal-gate.ts`): the model classifies the
+  material; only «own problem» and «solution request» with a stated pain or
+  customer become signals. The quote must occur in the source text (HTML is
+  read as text). Failure reasons are stored; provider-side failures return the
+  material to the queue.
+- Clustering (`lib/traceability.ts`, `lib/semantic.ts`): complete link on
+  embeddings of an English task phrase with per-model calibrated thresholds;
+  word overlap is the fallback.
+- Generation never duplicates a problem: a grown pattern extends the existing
+  opportunity. Provenance (pattern hash, signal ids, quotes, URLs) is verified
+  on every read.
+- Hourly scheduler: `.github/workflows/pipeline-schedule.yml` calls
+  `POST /api/cron/pipeline` with `CRON_SECRET`; each run syncs the most overdue
+  source (daily) or extracts two pending materials.
 
 ## Run locally
 
-Use Node.js 22.18+ (24 recommended).
+Node.js 24.
 
 ```sh
 npm ci
-# Copy .env.example to .env.local and supply a real PostgreSQL DATABASE_URL.
-npm run db:setup
+cp .env.example .env.local   # set DATABASE_URL (a non-production database) and OPENROUTER_API_KEY
+npm run db:setup             # generate client and apply migrations
 npm run dev
 ```
 
-`db:setup` generates the Prisma client and applies the PostgreSQL baseline;
-it does not reset an existing database. Copy `.env.example` to `.env.local` and set
-`OPENROUTER_API_KEY` for AI operations. No key is needed to browse records, explore
-demo examples, or receive an insufficient-evidence result. Optionally seed source
-definitions with `node --experimental-strip-types prisma/seed.ts`.
+Make an account at `/signup`; administrator rights are granted by an existing
+administrator at `/admin/users` (the very first one with SQL:
+`UPDATE "User" SET "isAdmin" = true WHERE email = '…'`).
 
-`DATABASE_URL` is required for database-backed runtime. `DIRECT_URL` optionally
-supplies an unpooled migration/import connection; npm CLI commands fall back to
-`DATABASE_URL`. There is no SQLite runtime fallback. Existing SQLite files are
-preserved for read-only import, not opened by the application. See
-[PostgreSQL migration, QA and deployment instructions](docs/POSTGRES-PRODUCTION.md).
-Database files and credentials are ignored by Git.
+## Configuration
 
-## Product flow
+| Variable | Where | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | runtime | PostgreSQL (pooled). Production and deploy previews use different Neon branches |
+| `DIRECT_URL` | migrations only | Unpooled URL; npm scripts fall back to `DATABASE_URL` |
+| `APP_ORIGIN` | production | Canonical HTTPS origin |
+| `OPENROUTER_API_KEY` | runtime | AI extraction, generation, validation, plans, embeddings |
+| `OPENROUTER_MODEL` | optional | Default `meta-llama/llama-3.3-70b-instruct` |
+| `OPENROUTER_EMBEDDING_MODEL` | optional | Default `openai/text-embedding-3-small` |
+| `CRON_SECRET` | runtime + GitHub secret | ≥ 32 characters; without it the scheduled endpoint refuses calls |
+| GitHub variable `APP_ORIGIN` | Actions | Site the hourly workflow calls |
 
-- `/dashboard`: recent database opportunities and counts derived from their evidence.
-- `/opportunities`: the same records, with search, category filters and sorting.
-- `/opportunities/:id`: problem, customer, evidence provenance and research gaps.
-- `/validation/:id`: evidence-based recommendation and confidence, separate from Score.
-- `/settings`: provider configuration status and links to existing data preparation tools.
+Every AI call states `max_tokens`; OpenRouter otherwise reserves the model's
+full output limit against the balance.
 
-`?mode=demo` explicitly selects the fixtures in `lib/mock-data.ts` on the list,
-details and validation pages. Demo examples never silently replace failed database
-requests, create database records or call the validation provider. `/insights`
-redirects to `/opportunities`. Existing sources, signals, clusters, patterns and
-evidence routes are retained. The legacy reports, team, alerts, simulator and
-integrations demonstration screens were removed; they were not backed by data.
+## Database and deployment
+
+- Schema: `prisma/schema.prisma`; migrations in `prisma/migrations`. Apply new
+  migrations to the preview and production Neon branches **before** deploying
+  code that needs them (additive migrations keep older code working).
+- Netlify builds `main` (`npm run netlify:build`); deploy previews for PRs.
+  The free plan includes 300 credits per month and a production deploy costs
+  15, so publish once per block of work. GitHub events can reach Netlify late
+  and out of order: after a merge, check that the published deploy is the
+  latest `main` commit.
+- SQLite import and the original PostgreSQL release procedure:
+  [docs/POSTGRES-PRODUCTION.md](docs/POSTGRES-PRODUCTION.md).
 
 ## Checks
 
 ```sh
 npm run lint
 npm run typecheck
-npm test
+npm test        # unit tests (node:test)
 npm run build
-```
-
-For desktop environments that cannot spawn child processes, use the supported
-Next.js thread/API mode (PowerShell):
-
-```powershell
-$env:FOUNDRY_BUILD_THREADS = '1'
-node node_modules/next/dist/bin/next build --webpack
-node --experimental-strip-types --test --test-isolation=none tests/*.test.ts
-```
-
-This mode still performs TypeScript checking. It does not ignore build errors.
-
-## Pipeline and evidence limits
-
-Source → RawItem → Signal → Normalize → Cluster → Pattern → Opportunity → Score → Evidence → Validation now retains exact member IDs and source quotes. Generate with POST /api/opportunities/generate and a patternId from /api/patterns. Old keyword-based clusterName generation and arbitrary /api/analyze input are no longer supported.
-
-Only signals with public non-placeholder URLs, exact source quotes and matching generation provenance contribute to an opportunity. Legacy hypotheses remain visible with a warning; their unsupported evidence and old stored scores are excluded. Score is a transparent evidence-support heuristic (material count, publication-host diversity, model-assigned signal strength), not market attractiveness, growth, revenue or success probability.
-
-Validation considers up to 40 materials and returns their snapshot. BUILD requires at least three distinct materials across two source records and two publication hosts in the positively cited subset, plus the model's verdict/confidence gate. These are conservative product guardrails, not statistical proof of independence or demand. Reports are not persisted beyond the open page.
-
-GitHub imports 15 recent open issues (optionally scoped to a repository); Hacker News imports 15 top story records, not linked articles or comment threads; RSS reads the configured feed. Source creation is currently available through POST /api/source. A legacy RSS source pointing to example.com must be replaced with a real feed configuration; it will now report an error instead of importing unrelated fixed feeds. Failed extractions can be retried through POST /api/signals/extract with rawItemId. Batch extraction handles pending records only.
-
-Email/password authentication and database-backed sessions are implemented. Profile, preferences, Saved and feedback belong to the signed-in user. Market records remain shared; pipeline mutations require an administrator. A Netlify scheduled function (`netlify/functions/pipeline-schedule.mts`) runs hourly on the published production deploy and calls `POST /api/cron/pipeline` with `CRON_SECRET`; each run either syncs the most overdue active source (daily interval) or extracts two pending materials and normalizes. Without `CRON_SECRET` (≥ 32 characters) the endpoint refuses all calls. Notifications and remote integrations are not implemented. Source documents are untrusted and AI extraction/generation can still misjudge relevance or combine different problems. No automated rule establishes willingness to pay.
-
-## Accounts and personalization
-
-The earlier adapter failure/fix is recorded in [NETLIFY-DEPLOYMENT.md](docs/NETLIFY-DEPLOYMENT.md). This revision enables database-backed routes when a PostgreSQL URL is configured, including on Netlify. Missing or non-PostgreSQL configuration returns an explicit 503. No permanent external database has been provisioned: successful preview packaging alone does not verify production accounts. Follow [the release instructions](docs/POSTGRES-PRODUCTION.md) before enabling those routes.
-
-Register at `/signup`, complete the six-step onboarding, or skip with limited personalization. Edit all answers at `/settings/personalization`. `/opportunities?view=for-you` ranks the common catalog using a separate deterministic Match Score; `?view=all` keeps the common market ranking. Match Score never changes Opportunity Score, evidence or Validation Confidence.
-
-Apply migrations and regenerate Prisma before starting this version. Outside localhost, set the canonical `APP_ORIGIN` and serve through HTTPS. New accounts are ordinary users; administrator privileges must be assigned by a trusted database operator, never by registration or profile fields. Settings → «Безопасность» offers password change (ends other sessions), a list of active sessions with sign-out elsewhere, and account deletion (password + typed confirmation; the last administrator cannot delete themselves). Email verification, password reset by email, OAuth and MFA are not implemented. Do not use this MVP as a public production identity service without deployment/security review.
-
-See [accounts architecture and final QA](docs/ACCOUNTS-PERSONALIZATION-QA.md) for the schema, algorithm, checks and remaining limitations. Historical audit reports below describe their original revision.
-
-## End-to-end checks
-
-`npm run e2e` runs real HTTP flows against a running app and a disposable
-database: registration and isolation, saved/feedback/decisions, key pages,
-insufficient-evidence validation without the model, admin-only pipeline,
-scheduled-pipeline secret, login limits, password change, account deletion and
-logout. It seeds and removes its own data and refuses non-local apps and
-databases unless `E2E_ALLOWED_DB_HOST` names a disposable host. CI runs it after
-the build against the PostgreSQL service with no AI key.
-
-```sh
 E2E_BASE_URL=http://localhost:3000 E2E_ALLOW_MUTATIONS=1 npm run e2e
 ```
 
-## Audit and repeatable QA
+`npm run e2e` seeds and removes its own data and runs real HTTP flows
+(accounts and isolation, decisions, pages, insufficient-evidence validation,
+admin boundary, scheduler secret, login limits, password change, deletion). It
+refuses non-local apps and databases unless `E2E_ALLOWED_DB_HOST` names a
+disposable host. CI runs all of the above on every PR against a PostgreSQL
+service with no AI key.
 
-See [the technical audit](docs/TECHNICAL-AUDIT-2026-09-27.md) and [recorded API checks](docs/audit/e2e-2026-09-27.json).
+## Limits
 
-For isolated production QA, provision a disposable PostgreSQL database, run
-`npm run db:setup`, then read-only import a consistent SQLite snapshot with
-`npm run db:import -- --sqlite /private/snapshot.db --apply`. Set
-`FOUNDRY_IMPORT_CONFIRM=EMPTY_POSTGRES_TARGET` only after verifying the destination.
-Never point destructive QA at production. `FOUNDRY_AUDIT_BUILD=1` at both build and
-start uses `.next-audit` without replacing `.next`.
+- Signals come from public posts and AI can misjudge relevance; quotes and
+  links let every conclusion be checked by hand.
+- No automated rule establishes willingness to pay; spending is counted only
+  when a source states it.
+- Email verification, password reset by email, OAuth and MFA are not
+  implemented.
+- Recommendations support decisions; they do not guarantee commercial success.
 
-The regression script deliberately clears/restores evidence on a selected audit-created opportunity. Run only on a disposable database with no concurrent writes:
-
-```powershell
-$env:QA_BASE_URL='http://127.0.0.1:3109'
-$env:QA_OPPORTUNITY_ID='<ID generated on the audit copy>'
-$env:QA_ALLOW_MUTATIONS='1'
-$env:QA_SESSION_COOKIE='<session of a QA administrator on the disposable copy>'
-node scripts/qa-pipeline.mjs
-```
-
-It verifies lineage, normalization/generation/extraction idempotency, score reset/restoration, validation guards, invalid requests and page HTTP responses. Live ingestion and first-time AI generation/extraction require network access and provider credentials; their recorded outcomes are separate from deterministic unit tests.
+Historical reports in `docs/` describe the project at their dates.

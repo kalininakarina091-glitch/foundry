@@ -1,5 +1,7 @@
 # Netlify deployment: PR #5
 
+> **Historical report.** It describes the project at the date below; see [README](../README.md) for the current state.
+
 Historical report for `d91d21c`: the SQLite guard and future-migration section below
 describe that revision only. The current PostgreSQL schema, conditional runtime
 guard, import and release procedure are documented in [POSTGRES-PRODUCTION.md](POSTGRES-PRODUCTION.md).
