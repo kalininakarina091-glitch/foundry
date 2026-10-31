@@ -13,7 +13,7 @@ const base = {
   planned: new Set<string>(),
   dismissed: new Set<string>(),
   profileComplete: true,
-  adminWarnings: null,
+  adminWarnings: null as number | null,
 };
 const hrefs = (x: Partial<typeof base>) => nextActions({ ...base, ...x }).map((a) => a.href);
 
