@@ -6,10 +6,14 @@ import { opportunityAttributes, matchOpportunity } from "@/lib/personalization";
 export async function GET() {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Войдите" }, { status: 401 });
-  const [row, saved, feedback, opportunities] = await Promise.all([
+  const [row, saved, feedback, decisions, opportunities] = await Promise.all([
     prisma.userProfile.findUnique({ where: { userId: user.id } }),
     prisma.savedOpportunity.findMany({ where: { userId: user.id } }),
     prisma.opportunityFeedback.findMany({ where: { userId: user.id } }),
+    prisma.opportunityDecision.findMany({
+      where: { userId: user.id, status: { not: null } },
+      select: { opportunityId: true, status: true },
+    }),
     prisma.opportunity.findMany({
       select: { id: true, matchAttributes: true, industry: true },
     }),
@@ -19,6 +23,7 @@ export async function GET() {
     limited: !profile.onboardingCompleted,
     saved: saved.map((s) => s.opportunityId),
     dismissed: feedback.map((f) => f.opportunityId),
+    decisions: Object.fromEntries(decisions.map((d) => [d.opportunityId, d.status])),
     matches: Object.fromEntries(
       opportunities.map((o) => [
         o.id,

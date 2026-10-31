@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { decodeProfile } from "@/lib/personal-profile";
 import { matchOpportunity, opportunityAttributes } from "@/lib/personalization";
 import { METRICS, recommendationLabel } from "@/lib/labels";
+import { decisionLabel } from "@/lib/decisions";
 import { opportunityHref, type OpportunityView } from "@/lib/opportunity-types";
 import { EmptyState, PageHeader } from "@/components/product-ui";
 export const dynamic = "force-dynamic";
@@ -40,12 +41,18 @@ export default async function ComparePage({
     );
   // Match Score is personal and computed for the signed-in user only.
   const user = await currentUser();
-  const [profileRow, rows] = await Promise.all([
+  const [profileRow, rows, decisions] = await Promise.all([
     user ? prisma.userProfile.findUnique({ where: { userId: user.id } }) : null,
     prisma.opportunity.findMany({
       where: { id: { in: items.map((o) => o.id) } },
       select: { id: true, matchAttributes: true, industry: true },
     }),
+    user
+      ? prisma.opportunityDecision.findMany({
+          where: { userId: user.id, opportunityId: { in: items.map((o) => o.id) } },
+          select: { opportunityId: true, status: true, note: true },
+        })
+      : [],
   ]);
   const profile = decodeProfile(profileRow);
   const match = (id: string) => {
@@ -94,6 +101,14 @@ export default async function ComparePage({
         return m?.score == null
           ? { text: "нет данных", value: null }
           : { text: `${m.score}/100 · известно ${m.coverage}% факторов`, value: m.score };
+      }),
+    },
+    {
+      label: "Моё решение",
+      cells: items.map((o) => {
+        const d = decisions.find((x) => x.opportunityId === o.id);
+        const label = decisionLabel(d?.status);
+        return { text: [label, d?.note].filter(Boolean).join(" — ") || "Не принято" };
       }),
     },
     { label: "Целевой клиент", cells: items.map((o) => ({ text: o.customer || "Не установлен" })) },

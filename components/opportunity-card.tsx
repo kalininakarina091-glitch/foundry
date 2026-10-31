@@ -21,6 +21,7 @@ export default function OpportunityCard({
   compared,
   onToggleCompare,
   compareFull,
+  decision,
 }: {
   opportunity: OpportunityView;
   saved: boolean;
@@ -32,6 +33,8 @@ export default function OpportunityCard({
   onToggleCompare?: () => void;
   /** Three items are already selected; this one cannot be added. */
   compareFull?: boolean;
+  /** The user's own decision label, e.g. «Изучаю». */
+  decision?: string | null;
 }) {
   const sources = new Set(opportunity.evidence.map((e) => e.sourceId)).size;
   const palette =
@@ -72,6 +75,7 @@ export default function OpportunityCard({
           <ScoreRing score={opportunity.score} />
           <div className="card-metric-details">
             <StatusBadge status={opportunity.status} />
+            {decision && <span className="badge">Моё: {decision}</span>}
             <div className="card-evidence">
               <ChartNoAxesColumnIncreasing size={23} />
               <span>
