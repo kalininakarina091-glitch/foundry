@@ -22,7 +22,7 @@ export function ScoreRing({ score }: { score: number }) {
   return (
     <span
       className={`score-ring ${value >= 80 ? "high" : ""}`}
-      title={`${METRICS.opportunityScore} — поддержка исходными материалами`}
+      title={`${METRICS.opportunityScore}: доказательства, спрос, актуальность, готовность платить`}
       aria-label={`${METRICS.opportunityScore}: ${score} из 100`}
     >
       <svg viewBox="0 0 40 40" aria-hidden="true">

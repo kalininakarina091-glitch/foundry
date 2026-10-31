@@ -7,6 +7,7 @@ import {
   EmptyState,
   EvidenceCard,
   ScoreBadge,
+  ScoreBreakdown,
   StatusBadge,
 } from "@/components/product-ui";
 export const dynamic = "force-dynamic";
@@ -86,6 +87,9 @@ export default async function OpportunityDetailPage({
             <TextSection title="Целевой клиент" value={opportunity.customer} />
             <TextSection title="Почему сейчас" value={opportunity.whyNow} />
           </section>
+          {opportunity.scoreBreakdown && (
+            <ScoreBreakdown score={opportunity.scoreBreakdown} />
+          )}
           <section id="evidence">
             <div className="mb-4 flex items-center gap-3">
               <h2 className="text-lg font-semibold">

@@ -3,6 +3,7 @@ import { traceableUrl } from "@/lib/traceability";
 import { sourceDocument } from "@/lib/source-text";
 import { evidenceStance } from "@/lib/validation";
 import { productTypeLabel } from "@/lib/labels";
+import { materialKindOf, scoreOpportunity } from "@/lib/opportunity-score";
 import { scoreSignals } from "@/lib/scoring";
 import { prisma } from "@/lib/db";
 import { mockOpportunities } from "@/lib/mock-data";
@@ -71,12 +72,38 @@ function databaseOpportunity(item: DatabaseOpportunity): OpportunityView {
     seen.add(url);
     return true;
   });
-  let research: Record<string, string | null> = {};
+  let research: Record<string, unknown> = {};
   try {
     const value = JSON.parse(item.research || "{}");
     if (value && typeof value === "object" && !Array.isArray(value))
       research = value;
   } catch {}
+  const text = (key: string) =>
+    typeof research[key] === "string" ? (research[key] as string) : null;
+  const evidenceSignals = evidence.map((e) => e.signal);
+  // Older hypotheses were generated before monetization was assessed: null.
+  const monetizationIds = Array.isArray(research.monetization_signal_ids)
+    ? research.monetization_signal_ids.filter((x): x is string => typeof x === "string")
+    : null;
+  const scoreBreakdown = scoreOpportunity({
+    signals: evidenceSignals.map((s) => ({
+      id: s.id,
+      strength: s.strength,
+      materialKind: materialKindOf(s.rawItem.metadata),
+      publishedAt: s.rawItem.publishedAt,
+    })),
+    evidence: scoreSignals(evidenceSignals),
+    monetizationSignalIds: monetizationIds,
+  });
+  const alternatives = Array.isArray(research.alternatives_mentioned)
+    ? [
+        ...new Set(
+          research.alternatives_mentioned
+            .map((a) => (a && typeof a.name === "string" ? a.name : null))
+            .filter((n): n is string => !!n),
+        ),
+      ]
+    : [];
   let origin: OpportunityView["origin"];
   try {
     const p = readProvenance(item.provenance);
@@ -102,15 +129,18 @@ function databaseOpportunity(item: DatabaseOpportunity): OpportunityView {
     industry: item.industry
       ? productTypeLabel(item.industry)
       : null,
-    score: scoreSignals(evidence.map((e) => e.signal)).overall,
+    score: scoreBreakdown.overall,
+    scoreBreakdown,
     status: item.status,
     createdAt: item.createdAt.toISOString(),
     demo: false,
     problem: item.description,
-    customer: research.target_customer || customers.join(" · ") || null,
-    whyNow: research.why_now || null,
-    market: research.market_gap || null,
-    competition: null,
+    customer: text("target_customer") || customers.join(" · ") || null,
+    whyNow: text("why_now"),
+    market: text("market_gap"),
+    competition: alternatives.length
+      ? `Названы в источниках: ${alternatives.join(", ")}. Это не полный обзор конкурентов.`
+      : null,
     monetization: null,
     risks: [],
     mvp: null,
