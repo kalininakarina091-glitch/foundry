@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Plus, Settings2 } from "lucide-react";
@@ -13,7 +14,13 @@ const AUTH_PATHS = [
   "/onboarding",
   "/profile-ready",
 ];
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({
+  children,
+  isAdmin = false,
+}: {
+  children: React.ReactNode;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const preferences = usePreferences();
   if (AUTH_PATHS.includes(pathname)) return <>{children}</>;
@@ -29,7 +36,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       >
         К содержимому
       </a>
-      <Sidebar />
+      <Suspense fallback={<aside className="foundry-sidebar" />}>
+        <Sidebar isAdmin={isAdmin} />
+      </Suspense>
       <div className="min-w-0 flex-1">
         <header className="app-topbar">
           <form action="/opportunities" className="global-search" role="search">
@@ -46,10 +55,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </form>
           <div className="topbar-actions">
             <LogoutButton />
-            <Link href="/sources" className="button-primary">
-              <Plus size={16} />
-              <span>Собрать сигналы</span>
-            </Link>
+            {isAdmin && (
+              <Link href="/sources" className="button-primary">
+                <Plus size={16} />
+                <span>Собрать сигналы</span>
+              </Link>
+            )}
             <Link
               href="/settings"
               className="settings-link"

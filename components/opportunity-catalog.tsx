@@ -21,7 +21,7 @@ export default function OpportunityCatalog({
   const preferences = usePreferences();
   const [query, setQuery] = useState(initialQuery);
   const [tab, setTab] = useState(
-    ["saved", "all"].includes(initialView) ? initialView : "for-you",
+    ["saved", "all", "mine"].includes(initialView) ? initialView : "for-you",
   );
   const [category, setCategory] = useState("");
   const [score, setScore] = useState("");

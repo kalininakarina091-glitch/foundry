@@ -228,6 +228,13 @@ body {
   color: #b5a0ff;
   filter: drop-shadow(0 0 5px #977bff88);
 }
+.sidebar-group {
+  margin: 14px 16px 2px;
+  color: #6f7a92;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .sidebar-note {
   margin: auto 15px 24px;
   padding: 17px;
@@ -883,9 +890,13 @@ body {
   .foundry-sidebar nav {
     flex-direction: row;
     padding: 5px 10px 12px;
+    overflow-x: auto;
+  }
+  .sidebar-group {
+    display: none;
   }
   .foundry-sidebar nav a {
-    flex: 1;
+    flex: 0 0 auto;
     justify-content: center;
     padding: 8px;
     gap: 7px;
