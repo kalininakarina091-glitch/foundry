@@ -15,7 +15,8 @@
     "db:generate": "node scripts/prisma-command.mjs generate",
     "db:validate": "node scripts/prisma-command.mjs validate",
     "db:migrate": "node scripts/prisma-command.mjs migrate deploy",
-    "db:import": "node scripts/import-sqlite-postgres.mjs"
+    "db:import": "node scripts/import-sqlite-postgres.mjs",
+    "e2e": "node --experimental-strip-types scripts/e2e.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.49",

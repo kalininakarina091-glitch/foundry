@@ -37,3 +37,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: End-to-end checks (real HTTP + disposable Postgres, no AI)
+        env:
+          # Disposable CI-only secret; the server and the test share it.
+          CRON_SECRET: ci-only-cron-secret-not-used-anywhere-else-000
+          E2E_BASE_URL: http://localhost:3109
+          E2E_ALLOW_MUTATIONS: "1"
+          E2E_EXPECT_NO_AI: "1"
+        run: |
+          npx next start -p 3109 > next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3109/login && break; sleep 1; done
+          npm run e2e || { echo "--- server log"; tail -n 80 next.log; exit 1; }
