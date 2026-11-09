@@ -88,6 +88,7 @@ administrator at `/admin/users` (the very first one with SQL:
 | `OPENROUTER_MODEL` | optional | Default `meta-llama/llama-3.3-70b-instruct` |
 | `OPENROUTER_EMBEDDING_MODEL` | optional | Default `openai/text-embedding-3-small` |
 | `CRON_SECRET` | runtime + GitHub secret | ≥ 32 characters; without it the scheduled endpoint refuses calls |
+| `AUTH_SECRET` | runtime | ≥ 32 characters; signs a 10-minute session hint so Proxy skips the session lookup on most requests. Optional: without it every request uses the lookup |
 | GitHub variable `APP_ORIGIN` | Actions | Site the hourly workflow calls |
 
 Every AI call states `max_tokens`; OpenRouter otherwise reserves the model's

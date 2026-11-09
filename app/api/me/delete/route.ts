@@ -7,6 +7,7 @@ import { verifyPassword } from "@/lib/auth-crypto";
 import { limitKey } from "@/lib/client-ip";
 import { consumeLimits } from "@/lib/rate-limit";
 import { DELETE_CONFIRMATION, deletionBlocked } from "@/lib/account";
+import { CLAIMS_COOKIE } from "@/lib/session-claims";
 // Deletes the account with its profile, sessions, saved items and feedback
 // (cascade). Shared market data stays; validation runs keep no user link.
 export async function POST(request: Request) {
@@ -50,6 +51,8 @@ export async function POST(request: Request) {
       { status: 409 },
     );
   await prisma.user.delete({ where: { id: user.id } });
-  (await cookies()).delete(SESSION_COOKIE);
+  const jar = await cookies();
+  jar.delete(SESSION_COOKIE);
+  jar.delete(CLAIMS_COOKIE);
   return NextResponse.json({ ok: true });
 }
