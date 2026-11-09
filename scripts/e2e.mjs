@@ -257,6 +257,25 @@ try {
       await prisma.user.updateMany({ where: { id: { in: others.map((o) => o.id) } }, data: { isAdmin: true } });
     }
   });
+  if (process.env.E2E_EXPECT_CLAIMS === "1")
+    await step("signed session hint: issued at login, never grants stale admin rights, cleared on logout", async () => {
+      const both = (res) => [session(res), res.setCookie.match(/foundry_claims=[^;]+/)[0]].join("; ");
+      // A hint issued before a promotion must not delay the new rights.
+      const before = await http("/api/auth/login", { method: "POST", body: { email: A.email, password } });
+      await prisma.user.update({ where: { email: A.email }, data: { isAdmin: true } });
+      assert.equal((await http("/api/signals/normalize", { method: "POST", cookie: both(before), body: {} })).status, 200);
+      const login = await http("/api/auth/login", { method: "POST", body: { email: A.email, password } });
+      assert.match(login.setCookie, /foundry_claims=[^;]+/);
+      const cookie = [session(login), login.setCookie.match(/foundry_claims=[^;]+/)[0]].join("; ");
+      // Rights removed in the database while the hint still says "admin":
+      // the route checks the database and refuses.
+      await prisma.user.update({ where: { email: A.email }, data: { isAdmin: false } });
+      assert.equal((await http("/api/signals/normalize", { method: "POST", cookie, body: {} })).status, 403);
+      // A hint without its session token is ignored.
+      assert.equal((await http("/api/me/profile", { cookie: login.setCookie.match(/foundry_claims=[^;]+/)[0] })).status, 401);
+      const out = await http("/api/auth/logout", { method: "POST", cookie, body: {} });
+      assert.match(out.setCookie, /foundry_claims=;|foundry_claims=[^;]*;[^,]*Max-Age=0|foundry_claims=[^;]*;[^,]*Expires=Thu, 01 Jan 1970/i);
+    });
   await step("login: wrong password 401, per-email limit 429 does not lock other accounts", async () => {
     const victim = `${run}-nobody@example.test`;
     for (let i = 0; i < 10; i++)

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth-constants";
 import { sameOrigin, configuredAppOrigin } from "@/lib/app-origin";
 import { databaseConfigured, DATABASE_DEPLOYMENT_MESSAGE } from "@/lib/deployment";
+import { CLAIMS_COOKIE, claimsSecret, verifyClaims } from "@/lib/session-claims";
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if (
@@ -41,11 +42,31 @@ export async function proxy(request: NextRequest) {
     "/api/auth/session",
   ].includes(path);
   if (publicRoute) return NextResponse.next();
-  // Native Prisma engines cannot run in Netlify Node.js Middleware. Resolve
-  // the opaque session in a regular Node route; do not trust cookie presence.
+  // Native Prisma engines cannot run in Netlify Node.js Middleware. A valid
+  // signed hint (lib/session-claims.ts) answers most requests without I/O;
+  // otherwise the opaque session is resolved in a regular Node route, which
+  // also issues a fresh hint. Cookie presence alone is never trusted.
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   let user: { isAdmin: boolean } | null = null;
-  if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) {
+  let refreshedCookies: string[] = [];
+  const secret = claimsSecret();
+  const hint =
+    token && secret
+      ? await verifyClaims(request.cookies.get(CLAIMS_COOKIE)?.value, token, secret)
+      : null;
+  // Shared-data mutations need admin rights. A hint saying "not admin" may be
+  // older than a promotion, so those requests ask the database instead.
+  const needsAdmin =
+    mutation &&
+    path.startsWith("/api/") &&
+    // Exact personal namespace: "/api/metrics" must not count as personal.
+    path !== "/api/me" &&
+    !path.startsWith("/api/me/") &&
+    !path.startsWith("/api/auth/") &&
+    path !== "/api/validate" &&
+    path !== "/api/plan";
+  if (hint && (hint.admin || !needsAdmin)) user = { isAdmin: hint.admin };
+  else if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) {
     try {
       const result = await fetch(
         new URL("/api/auth/session", configuredAppOrigin() || request.url),
@@ -57,6 +78,7 @@ export async function proxy(request: NextRequest) {
         },
       );
       if (!result.ok) throw new Error("Session lookup unavailable");
+      refreshedCookies = result.headers.getSetCookie();
       const session = await result.json();
       if (session.authenticated === true)
         user = { isAdmin: session.isAdmin === true };
@@ -71,23 +93,14 @@ export async function proxy(request: NextRequest) {
     return path.startsWith("/api/")
       ? NextResponse.json({ error: "Войдите в аккаунт." }, { status: 401 })
       : NextResponse.redirect(new URL("/login", request.url));
-  if (
-    mutation &&
-    path.startsWith("/api/") &&
-    // Exact personal namespace: "/api/metrics" must not count as personal.
-    path !== "/api/me" &&
-    !path.startsWith("/api/me/") &&
-    !path.startsWith("/api/auth/") &&
-    path !== "/api/validate" &&
-    path !== "/api/plan" &&
-    !user.isAdmin
-  )
+  if (needsAdmin && !user.isAdmin)
     return NextResponse.json(
       { error: "Изменение рыночного pipeline доступно только администратору." },
       { status: 403 },
     );
   const response = NextResponse.next();
   response.headers.set("Cache-Control", "private, no-store");
+  for (const cookie of refreshedCookies) response.headers.append("Set-Cookie", cookie);
   return response;
 }
 export const config = {

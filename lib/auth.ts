@@ -7,6 +7,12 @@ import { configuredAppOrigin } from "./app-origin";
 import { databaseConfigured } from "./deployment";
 import { clientIp, limitKey } from "./client-ip";
 import { consumeLimits } from "./rate-limit";
+import {
+  CLAIMS_COOKIE,
+  claimsCookieOptions,
+  claimsSecret,
+  signClaims,
+} from "./session-claims";
 export { SESSION_COOKIE } from "./auth-constants";
 export async function sessionUser(token?: string) {
   if (!databaseConfigured()) return null;
@@ -28,7 +34,11 @@ export async function requireUser() {
   if (!user) redirect("/login");
   return user;
 }
-export async function createSession(userId: string, request: Request) {
+export async function createSession(
+  userId: string,
+  request: Request,
+  isAdmin = false,
+) {
   const jar = await cookies();
   const previous = jar.get(SESSION_COOKIE)?.value;
   const token = newToken(),
@@ -42,14 +52,18 @@ export async function createSession(userId: string, request: Request) {
       data: { userId, tokenHash: tokenDigest(token), expiresAt },
     });
   });
+  const secure =
+    new URL(configuredAppOrigin() || request.url).protocol === "https:";
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure:
-      new URL(configuredAppOrigin() || request.url).protocol === "https:",
+    secure,
     path: "/",
     expires: expiresAt,
   });
+  const secret = claimsSecret();
+  if (secret)
+    jar.set(CLAIMS_COOKIE, await signClaims(token, isAdmin, secret), claimsCookieOptions(secure));
 }
 /** Digest of the request's session token, to tell "this device" apart. */
 export async function currentSessionDigest(): Promise<string | null> {
@@ -72,6 +86,7 @@ export async function endSession() {
       where: { tokenHash: tokenDigest(token) },
     });
   jar.delete(SESSION_COOKIE);
+  jar.delete(CLAIMS_COOKIE);
 }
 const MINUTE = 60000;
 // Per address and per account, never site-wide: one client must not be able

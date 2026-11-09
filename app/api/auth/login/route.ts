@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         { error: "Неверный email или пароль." },
         { status: 401 },
       );
-    await createSession(user.id, request);
+    await createSession(user.id, request, user.isAdmin);
     return NextResponse.json({
       next:
         user.profile?.onboardingCompleted || user.profile?.onboardingSkipped

@@ -41,6 +41,8 @@ jobs:
         env:
           # Disposable CI-only secret; the server and the test share it.
           CRON_SECRET: ci-only-cron-secret-not-used-anywhere-else-000
+          AUTH_SECRET: ci-only-session-hint-key-not-used-anywhere-else
+          E2E_EXPECT_CLAIMS: "1"
           E2E_BASE_URL: http://localhost:3109
           E2E_ALLOW_MUTATIONS: "1"
           E2E_EXPECT_NO_AI: "1"
